@@ -12,4 +12,9 @@ class Page extends Model
     {
         return $this->belongsTo(Chapter::class);
     }
+
+    public function getImageUrlAttribute($value)
+    {
+        return asset('storage/' . $value);
+    }
 }
