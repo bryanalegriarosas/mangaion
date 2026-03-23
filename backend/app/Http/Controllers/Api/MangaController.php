@@ -18,7 +18,9 @@ class MangaController extends Controller
 
     public function show(Manga $manga): JsonResponse
     {
-        return response()->json($manga);
+        return response()->json(
+            $manga->load('chapters')
+        );
     }
     
     public function store(Request $request): JsonResponse

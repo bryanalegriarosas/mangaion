@@ -13,7 +13,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     
     Route::prefix('mangas')->group(function () {
-        Route::apiResource('', MangaController::class);
+        Route::apiResource('', MangaController::class)->only(['store', 'update', 'destroy']);
 
         Route::prefix('{manga}')->group(function () {
             Route::get('chapters', [ChapterController::class, 'index']);
@@ -27,3 +27,6 @@ Route::middleware('auth:sanctum')->group(function () {
         });
     });
 });
+
+Route::get('/mangas', [MangaController::class, 'index']);
+Route::get('/mangas/{manga}', [MangaController::class, 'show']);

@@ -11,6 +11,11 @@ class Manga extends Model
     const STATUS_ONGOING = 'ongoing';
     const STATUS_COMPLETED = 'completed';
 
+    public function getRouteKeyName()
+    {
+        return 'slug';
+    }
+
     public function chapters()
     {
         return $this->hasMany(Chapter::class);
