@@ -13,7 +13,7 @@ class ChapterController extends Controller
     public function index(Manga $manga): JsonResponse
     {
         return response()->json(
-            $manga->chapters
+            $manga->chapters()
                 ->orderBy('chapter_number', 'desc')
                 ->get()
         );
