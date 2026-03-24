@@ -18,6 +18,6 @@ class Manga extends Model
 
     public function chapters()
     {
-        return $this->hasMany(Chapter::class);
+        return $this->hasMany(Chapter::class)->orderBy('chapter_number', 'desc');
     }
 }

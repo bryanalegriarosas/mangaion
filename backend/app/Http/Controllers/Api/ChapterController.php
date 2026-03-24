@@ -39,7 +39,7 @@ class ChapterController extends Controller
         $request->validate([
             'title' => 'nullable|string|max:255',
             'chapter_number' => 'required|numeric',
-            'images' => 'required|array',
+            'images' => 'required|array|min:1',
             'images.*' => 'image|max:5120', // 5MB cada imagen
         ]);
 
