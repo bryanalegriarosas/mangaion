@@ -5,22 +5,15 @@ namespace App\Models;
 use App\Models\ChapterVersion;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(
-    'manga_id',
-    'chapter_number',
-    'volume_number'
+    'name',
+    'website'
 )]
-class Chapter extends Model
+class ScanGroup extends Model
 {
-    public function manga(): BelongsTo
-    {
-        return $this->belongsTo(Manga::class);
-    }
-
-    public function versions(): HasMany
+    public function chapterVersions(): HasMany
     {
         return $this->hasMany(ChapterVersion::class);
     }

@@ -11,13 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('reading_progress', function (Blueprint $table) {
+        Schema::create('mangas_titles', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('manga_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('chapter_id')->constrained()->cascadeOnDelete();
-            $table->integer('page')->default(1);
-            $table->unique(['user_id', 'manga_id']);
+            $table->string('title');
+            $table->string('normalized_title')->index();
+            $table->string('type')->nullable();
             $table->timestamps();
         });
     }
@@ -27,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('reading_progress');
+        Schema::dropIfExists('mangas_titles');
     }
 };

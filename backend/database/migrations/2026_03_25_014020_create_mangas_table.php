@@ -17,9 +17,12 @@ return new class extends Migration
             $table->string('slug')->unique();
             $table->text('description')->nullable();
             $table->string('cover_image')->nullable();
+            $table->string('status')->default('ongoing');
+            $table->string('type')->default('manga');
             $table->string('author')->nullable();
-            $table->enum('status', ['ongoing', 'completed'])->default('ongoing');
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('artist')->nullable();
+            $table->year('release_year')->nullable();
+            $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();
             $table->timestamps();
         });
     }

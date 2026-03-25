@@ -13,12 +13,11 @@ return new class extends Migration
     {
         Schema::create('pages', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('chapter_id')->constrained()->cascadeOnDelete();
-            $table->string('image_url');
+            $table->foreignId('chapter_version_id')->constrained()->cascadeOnDelete();
             $table->integer('page_number');
+            $table->string('image_url');
+            $table->unique(['chapter_version_id', 'page_number']);
             $table->timestamps();
-            
-            $table->index(['chapter_id', 'page_number']);
         });
     }
 
