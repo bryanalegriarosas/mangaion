@@ -9,12 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(
-    'user_id',
-    'manga_id',
-    'chapter_version_id',
-    'content'
-)]
+#[Fillable(['user_id', 'manga_id', 'chapter_version_id', 'content'])]
 class Comment extends Model
 {
     public function user(): BelongsTo

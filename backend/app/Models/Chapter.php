@@ -8,11 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(
-    'manga_id',
-    'chapter_number',
-    'volume_number'
-)]
+#[Fillable(['manga_id', 'chapter_number', 'volume_number'])]
 class Chapter extends Model
 {
     public function manga(): BelongsTo

@@ -8,11 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(
-    'user_id',
-    'manga_id',
-    'rating'
-)]
+#[Fillable(['user_id', 'manga_id', 'rating'])]
 class Rating extends Model
 {
     public function user(): BelongsTo

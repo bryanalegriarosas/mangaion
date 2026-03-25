@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'title',
+    'normalized_title',
     'slug',
     'description',
     'cover_image',

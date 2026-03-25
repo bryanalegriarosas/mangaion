@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Language;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class LanguagesSeeder extends Seeder
 {
@@ -12,9 +12,21 @@ class LanguagesSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::table('languages')->insert([
-            ['name' => 'Español', 'code' => 'es'],
-            ['name' => 'English', 'code' => 'en'],
-        ]);
+        Language::truncate();
+        
+        $languages = [
+            [
+                'code' => 'es',
+                'name' => 'Español',
+            ],
+            [
+                'code' => 'en',
+                'name' => 'English',
+            ],
+        ];
+        
+        foreach ($languages as $language) {
+            Language::firstOrCreate(['code' => $language['code']], ['name' => $language['name']]);
+        }
     }
 }

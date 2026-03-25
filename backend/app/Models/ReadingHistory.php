@@ -9,12 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(
-    'user_id',
-    'manga_id',
-    'chapter_version_id',
-    'last_page'
-)]
+#[Fillable(['user_id', 'manga_id', 'chapter_version_id', 'last_page'])]
 class ReadingHistory extends Model
 {
     public function user(): BelongsTo
