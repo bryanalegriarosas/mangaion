@@ -2,11 +2,16 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Models\Chapter;
 use App\Models\ChapterVersion;
+use App\Models\Language;
 use App\Models\Manga;
 use App\Models\Page;
+use App\Models\Role;
+use App\Models\ScanGroup;
+use App\Models\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +19,8 @@ use Illuminate\Support\Str;
 
 class ChapterController extends Controller
 {
+    public function __construct(private Helper $helper) {}
+
     /**
      * 📖 Listar capítulos de un manga
      */
@@ -26,7 +33,11 @@ class ChapterController extends Controller
         }
 
         $chapters = $manga->chapters()
-            ->with(['versions.language', 'versions.scanGroup'])
+            ->with([
+                'versions.language',
+                'versions.scanGroup',
+                'versions.pages'
+            ])
             ->orderBy('chapter_number', 'desc')
             ->get();
 
@@ -43,8 +54,8 @@ class ChapterController extends Controller
         $user = $request->user();
 
         // 🔐 Permisos
-        if (!$user->hasRole('admin') && !$user->hasRole('uploader')) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        if (!$user->hasRole(Role::SUPER_ADMIN) && !$user->hasRole(Role::UPLOADER)) {
+            return response()->json(['message' => 'Unauthorized'], JsonResponse::HTTP_FORBIDDEN);
         }
 
         $request->validate([
@@ -82,7 +93,7 @@ class ChapterController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('admin') && !$user->hasRole('uploader')) {
+        if (!$user->hasRole(Role::SUPER_ADMIN) && !$user->hasRole(Role::UPLOADER)) {
             return response()->json(['message' => 'Unauthorized'], JsonResponse::HTTP_FORBIDDEN);
         }
 
@@ -106,15 +117,10 @@ class ChapterController extends Controller
         }
 
         // 🔥 Generar slug
-        $baseSlug = "cap-{$chapter->chapter_number}-{$request->language_id}-{$request->scan_group_id}";
+        $language = Language::find($request->language_id);
+        $scanGroup = ScanGroup::find($request->scan_group_id);
+        $baseSlug = "{$scanGroup->name}-{$language->code}-cap-{$this->helper->formatNumber($chapter->chapter_number)}";
         $slug = Str::slug($baseSlug);
-
-        $originalSlug = $slug;
-        $count = 1;
-
-        while (ChapterVersion::where('slug', $slug)->exists()) {
-            $slug = $originalSlug . '-' . $count++;
-        }
 
         $version = ChapterVersion::create([
             'chapter_id' => $chapter->id,
@@ -137,7 +143,7 @@ class ChapterController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('admin') && !$user->hasRole('uploader')) {
+        if (!$user->hasRole(Role::SUPER_ADMIN) && !$user->hasRole(Role::UPLOADER)) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -149,9 +155,10 @@ class ChapterController extends Controller
         DB::beginTransaction();
 
         try {
-            $pageNumber = 1;
+            $pageNumber = $version->pages()->max('page_number') ?? 0;
 
             foreach ($request->file('images') as $image) {
+                $pageNumber++;
 
                 // 📂 Ruta dinámica
                 $path = $image->store(
@@ -164,7 +171,7 @@ class ChapterController extends Controller
 
                 Page::create([
                     'chapter_version_id' => $version->id,
-                    'page_number' => $pageNumber++,
+                    'page_number' => $pageNumber,
                     'image_url' => $url
                 ]);
             }
@@ -174,7 +181,6 @@ class ChapterController extends Controller
             return response()->json([
                 'message' => 'Pages uploaded successfully'
             ], JsonResponse::HTTP_CREATED);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -188,14 +194,14 @@ class ChapterController extends Controller
     /**
      * 📚 Reader (ver capítulo)
      */
-    public function reader($slug): JsonResponse
+    public function reader(Request $request, $slug): JsonResponse
     {
         $version = ChapterVersion::where('slug', $slug)
             ->with([
                 'chapter.manga',
                 'language',
                 'scanGroup',
-                'pages'
+                'pages' => fn($q) => $q->orderBy('page_number')
             ])
             ->first();
 
@@ -203,8 +209,51 @@ class ChapterController extends Controller
             return response()->json(['message' => 'Not found'], 404);
         }
 
+        $chapter = $version->chapter;
+        $manga = $chapter->manga;
+
+        // 🔥 Obtener siguiente capítulo
+        $nextChapter = Chapter::where('manga_id', $manga->id)
+            ->where('chapter_number', '>', $chapter->chapter_number)
+            ->orderBy('chapter_number')
+            ->first();
+
+        // 🔥 Obtener capítulo anterior
+        $prevChapter = Chapter::where('manga_id', $manga->id)
+            ->where('chapter_number', '<', $chapter->chapter_number)
+            ->orderByDesc('chapter_number')
+            ->first();
+
+        // 👉 Obtener versión por defecto (primera disponible)
+        $nextVersion = $nextChapter?->versions()->first();
+        $prevVersion = $prevChapter?->versions()->first();
+
+        // 👁️ Registrar vista
+        View::firstOrCreate([
+            'manga_id' => $manga->id,
+            'ip_address' => $request->ip(),
+            'user_id' => optional($request->user())->id,
+        ]);
+
         return response()->json([
-            'data' => $version
+            'data' => [
+                'manga' => $manga,
+                'chapter' => $chapter,
+                'version' => $version,
+                'pages' => $version->pages,
+
+                'navigation' => [
+                    'next' => $nextVersion ? [
+                        'chapter_number' => $nextChapter->chapter_number,
+                        'slug' => $nextVersion->slug
+                    ] : null,
+
+                    'prev' => $prevVersion ? [
+                        'chapter_number' => $prevChapter->chapter_number,
+                        'slug' => $prevVersion->slug
+                    ] : null,
+                ]
+            ]
         ], JsonResponse::HTTP_OK);
     }
 }

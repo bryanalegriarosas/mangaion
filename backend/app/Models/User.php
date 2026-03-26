@@ -40,4 +40,25 @@ class User extends Authenticatable
     {
         return $this->roles->contains('name', $role);
     }
+
+    public function scanGroups(): BelongsToMany
+    {
+        return $this->belongsToMany(ScanGroup::class)->withPivot('role')->withTimestamps();
+    }
+
+    public function hasScanRole(int $groupId, string $role): bool
+    {
+        return $this->scanGroups()
+            ->where('scan_group_id', $groupId)
+            ->wherePivot('role', $role)
+            ->exists();
+    }
+
+    public function belongsToScan(int $groupId): bool
+    {
+        return $this->scanGroups()
+            ->where('scan_group_id', $groupId)
+            ->exists();
+    }
 }
+

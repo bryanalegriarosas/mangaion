@@ -17,8 +17,19 @@ class MangaController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Manga::query()
-            ->with(['genres', 'tags'])
-            ->withCount(['favorites', 'views', 'comments']);
+            ->with([
+                'genres', 
+                'tags', 
+                'titles', 
+                'chapters', 
+                'chapters.versions',
+                'chapters.versions.pages',
+            ])
+            ->withCount([
+                'favorites', 
+                'views', 
+                'comments'
+            ]);
 
         // 🔍 Buscar por título o títulos alternativos
         if ($request->filled('search')) {

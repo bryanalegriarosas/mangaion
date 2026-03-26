@@ -17,8 +17,9 @@ class RolSeeder extends Seeder
         $roles = [
             Role::SUPER_ADMIN,
             Role::ADMIN,
-            Role::MODERATOR,
+            Role::OWNER,
             Role::UPLOADER,
+            Role::EDITOR,
             Role::USER,
         ];
         

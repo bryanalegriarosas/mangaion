@@ -12,15 +12,17 @@ class Role extends Model
 {
     const SUPER_ADMIN = 'super_admin';
     const ADMIN = 'admin';
-    const MODERATOR = 'moderator';
+    const OWNER = 'owner';
     const UPLOADER = 'uploader';
+    const EDITOR = 'editor';
     const USER = 'user';
 
     const AVAILABLE_ROLES = [
         self::SUPER_ADMIN,
         self::ADMIN,
-        self::MODERATOR,
+        self::OWNER,
         self::UPLOADER,
+        self::EDITOR,
         self::USER,
     ];
 
