@@ -31,6 +31,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class Manga extends Model
 {
+
+    public function getCoverImageUrlAttribute(): ?string
+    {
+        return $this->cover_image
+            ? asset('storage/' . $this->cover_image)
+            : null;
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

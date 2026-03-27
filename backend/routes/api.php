@@ -55,6 +55,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::prefix('versions')->group(function (): void {
         Route::prefix('{version}')->group(function (): void {
             Route::post('pages', [ChapterController::class, 'storePages']);
+            Route::put('pages', [ChapterController::class, 'replacePages']);
         });
     });
 

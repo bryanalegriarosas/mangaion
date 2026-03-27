@@ -60,5 +60,18 @@ class User extends Authenticatable
             ->where('scan_group_id', $groupId)
             ->exists();
     }
+
+    public function canUploadToScan(int $scanGroupId): bool
+    {
+        // 👑 acceso total
+        if ($this->hasRole(Role::SUPER_ADMIN) || $this->hasRole(Role::ADMIN)) {
+            return true;
+        }
+
+        return $this->scanGroups()
+            ->where('scan_group_id', $scanGroupId)
+            ->wherePivotIn('role', [Role::OWNER, Role::UPLOADER])
+            ->exists();
+    }
 }
 

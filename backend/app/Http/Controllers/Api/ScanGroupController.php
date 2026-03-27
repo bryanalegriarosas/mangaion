@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Role;
 use App\Models\ScanGroup;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ScanGroupController extends Controller
@@ -11,19 +13,19 @@ class ScanGroupController extends Controller
     /**
      * 📄 Listar grupos
      */
-    public function index()
+    public function index(): JsonResponse
     {
         $groups = ScanGroup::withCount('users')->latest()->get();
 
         return response()->json([
             'data' => $groups
-        ]);
+        ], JsonResponse::HTTP_OK);
     }
 
     /**
      * 🔍 Ver grupo con miembros
      */
-    public function show($id)
+    public function show($id): JsonResponse
     {
         $group = ScanGroup::with('users')->find($id);
 
@@ -33,13 +35,13 @@ class ScanGroupController extends Controller
 
         return response()->json([
             'data' => $group
-        ]);
+        ], JsonResponse::HTTP_OK);
     }
 
     /**
      * 📥 Crear grupo
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $request->validate([
             'name' => 'required|string|max:255',
@@ -59,13 +61,13 @@ class ScanGroupController extends Controller
         return response()->json([
             'message' => 'Scan group created',
             'data' => $group
-        ], 201);
+        ], JsonResponse::HTTP_CREATED);
     }
 
     /**
      * ➕ Agregar usuario al grupo
      */
-    public function addUser(Request $request, $groupId)
+    public function addUser(Request $request, $groupId): JsonResponse
     {
         $request->validate([
             'user_id' => 'required|exists:users,id',
@@ -82,8 +84,8 @@ class ScanGroupController extends Controller
         $user = $request->user();
 
         if (
-            !$user->hasRole('admin') &&
-            !$user->hasScanRole($groupId, 'owner')
+            !$user->hasRole(Role::SUPER_ADMIN) &&
+            !$user->hasScanRole($groupId, Role::OWNER)
         ) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
@@ -94,13 +96,13 @@ class ScanGroupController extends Controller
 
         return response()->json([
             'message' => 'User added to group'
-        ]);
+        ], JsonResponse::HTTP_OK);
     }
 
     /**
      * 🔄 Actualizar rol
      */
-    public function updateUserRole(Request $request, $groupId, $userId)
+    public function updateUserRole(Request $request, $groupId, $userId): JsonResponse
     {
         $request->validate([
             'role' => 'required|string'
@@ -115,8 +117,8 @@ class ScanGroupController extends Controller
         $user = $request->user();
 
         if (
-            !$user->hasRole('admin') &&
-            !$user->hasScanRole($groupId, 'owner')
+            !$user->hasRole(Role::SUPER_ADMIN) &&
+            !$user->hasScanRole($groupId, Role::OWNER)
         ) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
@@ -127,13 +129,13 @@ class ScanGroupController extends Controller
 
         return response()->json([
             'message' => 'Role updated'
-        ]);
+        ], JsonResponse::HTTP_OK);
     }
 
     /**
      * ❌ Quitar usuario del grupo
      */
-    public function removeUser(Request $request, $groupId, $userId)
+    public function removeUser(Request $request, $groupId, $userId): JsonResponse
     {
         $group = ScanGroup::find($groupId);
 
@@ -144,8 +146,8 @@ class ScanGroupController extends Controller
         $user = $request->user();
 
         if (
-            !$user->hasRole('admin') &&
-            !$user->hasScanRole($groupId, 'owner')
+            !$user->hasRole(Role::SUPER_ADMIN) &&
+            !$user->hasScanRole($groupId, Role::OWNER)
         ) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
@@ -154,13 +156,13 @@ class ScanGroupController extends Controller
 
         return response()->json([
             'message' => 'User removed from group'
-        ]);
+        ], JsonResponse::HTTP_OK);
     }
 
     /**
      * ❌ Eliminar grupo
      */
-    public function destroy(Request $request, $id)
+    public function destroy(Request $request, $id): JsonResponse
     {
         $group = ScanGroup::find($id);
 
@@ -171,8 +173,8 @@ class ScanGroupController extends Controller
         $user = $request->user();
 
         if (
-            !$user->hasRole('admin') &&
-            !$user->hasScanRole($id, 'owner')
+            !$user->hasRole(Role::SUPER_ADMIN) &&
+            !$user->hasScanRole($id, Role::OWNER)
         ) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
@@ -181,6 +183,6 @@ class ScanGroupController extends Controller
 
         return response()->json([
             'message' => 'Group deleted'
-        ]);
+        ], JsonResponse::HTTP_OK);
     }
 }

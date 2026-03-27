@@ -51,11 +51,15 @@ class ChapterController extends Controller
      */
     public function store(Request $request, Manga $manga): JsonResponse
     {
-        $user = $request->user();
-
-        // 🔐 Permisos
-        if (!$user->hasRole(Role::SUPER_ADMIN) && !$user->hasRole(Role::UPLOADER)) {
-            return response()->json(['message' => 'Unauthorized'], JsonResponse::HTTP_FORBIDDEN);
+        // 🔐 Solo admins o uploaders globales
+        if (
+            !$request->user()->hasRole(Role::ADMIN) &&
+            !$request->user()->hasRole(Role::SUPER_ADMIN) &&
+            !$request->user()->hasRole(Role::UPLOADER)
+        ) {
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], JsonResponse::HTTP_FORBIDDEN);
         }
 
         $request->validate([
@@ -63,7 +67,6 @@ class ChapterController extends Controller
             'volume_number' => 'nullable|integer'
         ]);
 
-        // ❗ Evitar duplicado de capítulo
         $exists = Chapter::where('manga_id', $manga->id)
             ->where('chapter_number', $request->chapter_number)
             ->exists();
@@ -91,19 +94,19 @@ class ChapterController extends Controller
      */
     public function storeVersion(Request $request, Chapter $chapter): JsonResponse
     {
-        $user = $request->user();
-
-        if (!$user->hasRole(Role::SUPER_ADMIN) && !$user->hasRole(Role::UPLOADER)) {
-            return response()->json(['message' => 'Unauthorized'], JsonResponse::HTTP_FORBIDDEN);
-        }
-
         $request->validate([
             'language_id' => 'required|exists:languages,id',
             'scan_group_id' => 'required|exists:scan_groups,id',
             'title' => 'nullable|string|max:255'
         ]);
 
-        // ❗ Evitar duplicado (misma versión)
+        // 🔐 permiso real
+        if (!$request->user()->canUploadToScan($request->scan_group_id)) {
+            return response()->json([
+                'message' => 'You do not have permission to upload to this scan group'
+            ], JsonResponse::HTTP_FORBIDDEN);
+        }
+
         $exists = ChapterVersion::where([
             'chapter_id' => $chapter->id,
             'language_id' => $request->language_id,
@@ -116,11 +119,17 @@ class ChapterController extends Controller
             ], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        // 🔥 Generar slug
         $language = Language::find($request->language_id);
         $scanGroup = ScanGroup::find($request->scan_group_id);
+
         $baseSlug = "{$scanGroup->name}-{$language->code}-cap-{$this->helper->formatNumber($chapter->chapter_number)}";
         $slug = Str::slug($baseSlug);
+
+        // 🔥 evitar duplicado de slug
+        $count = ChapterVersion::where('slug', 'LIKE', "{$slug}%")->count();
+        if ($count > 0) {
+            $slug .= '-' . ($count + 1);
+        }
 
         $version = ChapterVersion::create([
             'chapter_id' => $chapter->id,
@@ -141,10 +150,12 @@ class ChapterController extends Controller
      */
     public function storePages(Request $request, ChapterVersion $version): JsonResponse
     {
-        $user = $request->user();
+        $scanGroupId = $version->scan_group_id;
 
-        if (!$user->hasRole(Role::SUPER_ADMIN) && !$user->hasRole(Role::UPLOADER)) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        if (!$request->user()->canUploadToScan($scanGroupId)) {
+            return response()->json([
+                'message' => 'You do not have permission to upload pages for this scan group'
+            ], JsonResponse::HTTP_FORBIDDEN);
         }
 
         $request->validate([
@@ -192,6 +203,60 @@ class ChapterController extends Controller
     }
 
     /**
+     * 🔄 Reemplazar páginas (URLs)
+     */
+    public function replacePages(Request $request, ChapterVersion $version): JsonResponse
+    {
+        if (!$request->user()->canUploadToScan($version->scan_group_id)) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'images' => 'required|array|min:1',
+            'images.*' => 'required|image'
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            // 🧹 borrar anteriores
+            $version->pages()->delete();
+
+            $pageNumber = 1;
+
+            foreach ($request->file('images') as $image) {
+
+                $path = $image->store(
+                    "mangas/{$version->chapter->manga->id}/chapters/{$version->chapter_id}/versions/{$version->id}",
+                    'public'
+                );
+
+                $url = asset("storage/" . $path);
+
+                Page::create([
+                    'chapter_version_id' => $version->id,
+                    'page_number' => $pageNumber++,
+                    'image_url' => $url
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Pages replaced successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'message' => 'Error',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * 📚 Reader (ver capítulo)
      */
     public function reader(Request $request, $slug): JsonResponse
@@ -225,8 +290,15 @@ class ChapterController extends Controller
             ->first();
 
         // 👉 Obtener versión por defecto (primera disponible)
-        $nextVersion = $nextChapter?->versions()->first();
-        $prevVersion = $prevChapter?->versions()->first();
+        $nextVersion = $nextChapter?->versions()
+            ->where('language_id', $version->language_id)
+            ->first()
+            ?? $nextChapter?->versions()->first();
+
+        $prevVersion = $prevChapter?->versions()
+            ->where('language_id', $version->language_id)
+            ->first()
+            ?? $prevChapter?->versions()->first();
 
         // 👁️ Registrar vista
         View::firstOrCreate([

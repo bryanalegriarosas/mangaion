@@ -28,8 +28,9 @@ class AuthController extends Controller
 
         // 🎭 Asignar rol por defecto
         $role = Role::where('name', 'user')->first();
+
         if ($role) {
-            $user->roles()->attach($role->id);
+            $user->roles()->syncWithoutDetaching([$role->id]);
         }
 
         $token = $user->createToken('api_token')->plainTextToken;
@@ -37,7 +38,7 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'User registered',
             'token' => $token,
-            'user' => $user
+            'user' => $user->load('roles'),
         ], JsonResponse::HTTP_CREATED);
     }
 
@@ -59,7 +60,7 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Login successful',
             'token' => $token,
-            'user' => $user->load('roles')
+            'user' => $user->load('roles'),
         ], JsonResponse::HTTP_OK);
     }
 
@@ -69,7 +70,7 @@ class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         return response()->json([
-            'user' => $request->user()->load('roles')
+            'user' => $request->user()->load('roles'),
         ], JsonResponse::HTTP_OK);
     }
 
