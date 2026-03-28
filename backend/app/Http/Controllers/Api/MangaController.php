@@ -2,62 +2,62 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Manga\StoreRequest;
+use App\Http\Requests\Manga\UpdateRequest;
+use App\Http\Resources\MangaResource;
 use App\Models\Manga;
 use App\Models\Role;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class MangaController extends Controller
 {
-    /**
-     * 📄 Listar mangas con filtros
-     */
-    public function index(Request $request): JsonResponse
+
+    public function __construct(private Helper $helper) {}
+
+    // ─────────────────────────────────────────────────────────────
+    // 📄 LISTAR — con filtros y paginación
+    // ─────────────────────────────────────────────────────────────
+    public function index(Request $request): AnonymousResourceCollection
     {
         $query = Manga::query()
             ->with([
-                'genres', 
-                'tags', 
+                'genres:id,name,slug',
+                'tags:id,name,slug,category',
                 'titles',
             ])
-            ->withCount([
-                'favorites', 
-                'views', 
-                'comments'
-            ]);
+            ->withCount(['favorites', 'views', 'comments']);
 
-        // 🔍 Buscar por título o títulos alternativos
+        // 🔍 Búsqueda — usa normalized_title para consistencia con el esquema
         if ($request->filled('search')) {
-            $search = strtolower($request->search);
+            $search = Str::of($request->search)->lower()->trim()->__toString();
 
             $query->where(function ($q) use ($search) {
-                $q->whereRaw('LOWER(title) LIKE ?', ["%{$search}%"])
-                  ->orWhereHas('titles', function ($q2) use ($search) {
-                      $q2->where('normalized_title', 'LIKE', "%{$search}%");
-                  });
+                $q->where('normalized_title', 'LIKE', "%{$search}%")
+                  ->orWhereHas('titles', fn($q2) =>
+                      $q2->where('normalized_title', 'LIKE', "%{$search}%")
+                  );
             });
         }
 
         // 🎭 Filtro por género (slug)
         if ($request->filled('genre')) {
-            $genre = $request->genre;
-
-            $query->whereHas('genres', function ($q) use ($genre) {
-                $q->where('slug', $genre);
-            });
+            $query->whereHas('genres', fn($q) =>
+                $q->where('slug', $request->genre)
+            );
         }
 
         // 🏷️ Filtro por tag (slug)
         if ($request->filled('tag')) {
-            $tag = $request->tag;
-
-            $query->whereHas('tags', function ($q) use ($tag) {
-                $q->where('slug', $tag);
-            });
+            $query->whereHas('tags', fn($q) =>
+                $q->where('slug', $request->tag)
+            );
         }
 
         // 📊 Filtro por status
@@ -71,292 +71,201 @@ class MangaController extends Controller
         }
 
         // 🔥 Orden
-        if ($request->filled('sort')) {
-            switch ($request->sort) {
-                case 'popular':
-                    $query->orderByDesc('views_count');
-                    break;
-                case 'favorites':
-                    $query->orderByDesc('favorites_count');
-                    break;
-                case 'latest':
-                    $query->latest();
-                    break;
-                default:
-                    $query->latest();
-            }
-        } else {
-            $query->latest();
-        }
+        match ($request->input('sort', 'latest')) {
+            'popular'   => $query->orderByDesc('views_count'),
+            'favorites' => $query->orderByDesc('favorites_count'),
+            default     => $query->latest(),
+        };
 
-        $mangas = $query->paginate(12);
-
-        return response()->json([
-            'data' => $mangas
-        ]);
+        return MangaResource::collection($query->paginate(12));
     }
 
-    /**
-     * 🔍 Ver manga por slug
-     */
-    public function show($slug): JsonResponse
+    // ─────────────────────────────────────────────────────────────
+    // 🔍 VER — por ID
+    // ─────────────────────────────────────────────────────────────
+    public function show(Manga $manga): MangaResource
     {
-        $manga = Manga::where('slug', $slug)
-            ->with([
-                'titles',
-                'genres',
-                'tags',
-                'chapters.versions.language',
-                'chapters.versions.scanGroup'
-            ])
-            ->withCount(['favorites', 'views', 'comments'])
-            ->first();
+        $manga->load([
+            'titles',
+            'genres:id,name,slug',
+            'tags:id,name,slug,category',
+            'chapters' => fn($q) => $q->orderBy('chapter_number'),
+            'chapters.versions.language:id,name,code',
+            'chapters.versions.scanGroup:id,name',
+            'ratings:id,manga_id,rating',
+        ])->loadCount(['favorites', 'views', 'comments']);
 
-        if (!$manga) {
-            return response()->json([
-                'message' => 'Manga not found'
-            ], 404);
-        }
-
-        return response()->json([
-            'data' => $manga
-        ]);
+        return new MangaResource($manga);
     }
 
-    /**
-     * 📥 Crear manga
-     */
-    public function store(Request $request): JsonResponse
+    // ─────────────────────────────────────────────────────────────
+    // 📥 CREAR
+    // ─────────────────────────────────────────────────────────────
+    public function store(StoreRequest $request): JsonResponse
     {
-        $user = $request->user();
-
-        if (
-            !$user->hasRole(Role::SUPER_ADMIN) &&
-            !$user->hasRole(Role::ADMIN) &&
-            !$user->hasRole(Role::UPLOADER)
-        ) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'status' => 'required|string',
-            'cover_image' => 'required|image|mimes:jpg,jpeg,png,webp|max:5120',
-            'type' => 'required|string',
-            'genres' => 'array',
-            'genres.*' => 'exists:genres,id',
-            'tags' => 'array',
-            'tags.*' => 'exists:tags,id',
-        ]);
-
-        return DB::transaction(function () use ($request, $user) {
-
-            // 🔥 Normalización PRO
+        return DB::transaction(function () use ($request) {
+            $user       = $request->user();
             $normalized = Str::of($request->title)->lower()->trim()->__toString();
 
-            // ❗ Evitar duplicados
+            // ❗ Evitar duplicados por título normalizado
             $exists = Manga::where('normalized_title', $normalized)
-                ->orWhereHas('titles', fn($q) => $q->where('normalized_title', $normalized))
+                ->orWhereHas('titles', fn($q) =>
+                    $q->where('normalized_title', $normalized)
+                )
                 ->exists();
 
             if ($exists) {
                 return response()->json([
-                    'message' => 'Manga already exists'
-                ], 422);
+                    'message' => 'A manga with this title already exists.',
+                ], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
             }
 
-            // 🔥 Slug único
-            $slug = Str::slug($request->title);
-            $originalSlug = $slug;
-            $count = 1;
-
-            while (Manga::where('slug', $slug)->exists()) {
-                $slug = "{$originalSlug}-{$count}";
-                $count++;
-            }
+            // 🔑 Slug único
+            $slug = $this->helper->generateUniqueSlug(Str::slug($request->title));
 
             // 📚 Crear manga
             $manga = Manga::create([
-                'title' => $request->title,
+                'title'            => $request->title,
                 'normalized_title' => $normalized,
-                'slug' => $slug,
-                'description' => $request->description,
-                'status' => $request->status,
-                'type' => $request->type,
-                'created_by' => $user->id
+                'slug'             => $slug,
+                'description'      => $request->description,
+                'author'           => $request->author,
+                'artist'           => $request->artist,
+                'release_year'     => $request->release_year,
+                'status'           => $request->status,
+                'type'             => $request->type,
+                'created_by'       => $user->id,
             ]);
 
-            // 🔥 título principal
+            // 📝 Título principal en manga_titles
             $manga->titles()->create([
-                'title' => $request->title,
+                'title'            => $request->title,
                 'normalized_title' => $normalized,
-                'type' => 'main'
+                'type'             => 'main',
             ]);
 
-            // 🎭 géneros
+            // 🎭 Géneros y tags
             if ($request->filled('genres')) {
                 $manga->genres()->sync($request->genres);
             }
-
-            // 🏷️ tags
             if ($request->filled('tags')) {
                 $manga->tags()->sync($request->tags);
             }
 
-            // 🖼️ cover
-            if ($request->hasFile('cover_image')) {
-                $file = $request->file('cover_image');
+            // 🖼️ Cover
+            $manga->update([
+                'cover_image' => $this->storeCover($request, $manga->id),
+            ]);
 
-                $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
-                $path = "mangas/{$manga->id}/cover";
-
-                $storedPath = $file->storeAs($path, $filename, 'public');
-
-                $manga->update([
-                    'cover_image' => $storedPath
-                ]);
-            }
-
-            return response()->json([
-                'message' => 'Manga created',
-                'data' => $manga->load(['genres', 'tags', 'titles'])
-            ], JsonResponse::HTTP_CREATED);
+            return (new MangaResource(
+                $manga->load(['genres', 'tags', 'titles'])
+            ))->response()->setStatusCode(JsonResponse::HTTP_CREATED);
         });
     }
 
-    /**
-     * ✏️ Actualizar manga
-     */
-    public function update(Request $request, $id): JsonResponse
+    // ─────────────────────────────────────────────────────────────
+    // ✏️ ACTUALIZAR — por ID
+    // ─────────────────────────────────────────────────────────────
+    public function update(UpdateRequest $request, Manga $manga): JsonResponse
     {
-        $manga = Manga::find($id);
-
-        if (!$manga) {
-            return response()->json(['message' => 'Not found'], 404);
-        }
-
-        $user = $request->user();
-
-        if (
-            $manga->created_by !== $user->id &&
-            !$user->hasRole(Role::SUPER_ADMIN)
-        ) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        $request->validate([
-            'title' => 'sometimes|string|max:255',
-            'description' => 'nullable|string',
-            'cover_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
-            'status' => 'sometimes|string',
-            'type' => 'sometimes|string',
-            'genres' => 'array',
-            'genres.*' => 'exists:genres,id',
-            'tags' => 'array',
-            'tags.*' => 'exists:tags,id',
-        ]);
-
         return DB::transaction(function () use ($request, $manga) {
 
-            // 🔥 Si cambia título
+            // 🔄 Si cambia el título
             if ($request->filled('title')) {
-
                 $normalized = Str::of($request->title)->lower()->trim()->__toString();
 
-                // ❗ evitar duplicado
-                $exists = Manga::where('normalized_title', $normalized)
+                $duplicate = Manga::where('normalized_title', $normalized)
                     ->where('id', '!=', $manga->id)
                     ->exists();
 
-                if ($exists) {
+                if ($duplicate) {
                     return response()->json([
-                        'message' => 'Manga with this title already exists'
+                        'message' => 'A manga with this title already exists.',
                     ], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
                 }
 
-                $manga->update([
-                    'title' => $request->title,
-                    'normalized_title' => $normalized
-                ]);
-
-                // 🔥 sync título principal
                 $manga->titles()->updateOrCreate(
                     ['type' => 'main'],
-                    [
-                        'title' => $request->title,
-                        'normalized_title' => $normalized
-                    ]
+                    ['title' => $request->title, 'normalized_title' => $normalized]
                 );
+
+                $manga->fill([
+                    'title'            => $request->title,
+                    'normalized_title' => $normalized,
+                ]);
             }
 
-            // 🔄 otros campos
-            $manga->update($request->only([
+            // 🔄 Campos opcionales
+            $manga->fill($request->only([
                 'description',
+                'author',
+                'artist',
+                'release_year',
                 'status',
-                'type'
+                'type',
             ]));
 
-            // 🎭 géneros
-            if ($request->filled('genres')) {
-                $manga->genres()->sync($request->genres);
+            $manga->save();
+
+            // 🎭 Géneros y tags
+            // Usamos has() en lugar de filled() para permitir arrays vacíos (desasignar todos)
+            if ($request->has('genres')) {
+                $manga->genres()->sync($request->genres ?? []);
+            }
+            if ($request->has('tags')) {
+                $manga->tags()->sync($request->tags ?? []);
             }
 
-            // 🏷️ tags
-            if ($request->filled('tags')) {
-                $manga->tags()->sync($request->tags);
-            }
-
-            // 🖼️ cover
+            // 🖼️ Cover
             if ($request->hasFile('cover_image')) {
-
                 if ($manga->cover_image) {
                     Storage::disk('public')->delete($manga->cover_image);
                 }
-
-                $file = $request->file('cover_image');
-
-                $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
-                $path = "mangas/{$manga->id}/cover";
-
-                $storedPath = $file->storeAs($path, $filename, 'public');
-
                 $manga->update([
-                    'cover_image' => $storedPath
+                    'cover_image' => $this->storeCover($request, $manga->id),
                 ]);
             }
 
-            return response()->json([
-                'message' => 'Manga updated',
-                'data' => $manga->load(['genres', 'tags', 'titles'])
-            ], JsonResponse::HTTP_OK);
+            return (new MangaResource(
+                $manga->load(['genres', 'tags', 'titles'])
+            ))->response();
         });
     }
 
-    /**
-     * ❌ Eliminar manga
-     */
-    public function destroy(Request $request, $id): JsonResponse
+    // ─────────────────────────────────────────────────────────────
+    // ❌ ELIMINAR — por ID
+    // ─────────────────────────────────────────────────────────────
+    public function destroy(Request $request, Manga $manga): JsonResponse
     {
-        $manga = Manga::find($id);
-
-        if (!$manga) {
-            return response()->json(['message' => 'Not found'], JsonResponse::HTTP_NOT_FOUND);
-        }
-
         $user = $request->user();
 
         if (
             $manga->created_by !== $user->id &&
-            !$user->hasRole(Role::SUPER_ADMIN)
+            !$user->hasRole(Role::SUPER_ADMIN) &&
+            !$user->hasRole(Role::ADMIN)
         ) {
-            return response()->json(['message' => 'Unauthorized'], JsonResponse::HTTP_FORBIDDEN);
+            return response()->json(
+                ['message' => 'Unauthorized'],
+                JsonResponse::HTTP_FORBIDDEN
+            );
         }
+
+        // 🗑️ Borra todo el directorio del manga en storage (cover + imágenes futuras)
+        Storage::disk('public')->deleteDirectory("mangas/{$manga->id}");
 
         $manga->delete();
 
-        return response()->json([
-            'message' => 'Manga deleted'
-        ], JsonResponse::HTTP_NO_CONTENT);
+        return response()->json(
+            ['message' => 'Manga deleted successfully.'],
+            JsonResponse::HTTP_OK
+        );
+    }
+
+    private function storeCover(Request $request, int $mangaId): string
+    {
+        $file     = $request->file('cover_image');
+        $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
+
+        return $file->storeAs("mangas/{$mangaId}/cover", $filename, 'public');
     }
 }
