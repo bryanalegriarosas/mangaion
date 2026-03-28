@@ -4,11 +4,14 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ChapterController;
 use App\Http\Controllers\Api\MangaController;
 use App\Http\Controllers\Api\ScanGroupController;
+use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
+
 
 //Rutas Publicas
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
+Route::get('home', [HomeController::class, 'index']);
 
 Route::prefix('mangas')->group(function (): void {
     Route::get('', [MangaController::class, 'index']);

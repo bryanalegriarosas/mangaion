@@ -11,9 +11,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['chapter_id', 'language_id', 'scan_group_id', 'title', 'slug'])]
+#[Fillable(['chapter_id', 'language_id', 'scan_group_id', 'title', 'slug', 'published_at'])]
 class ChapterVersion extends Model
 {
+    public function casts(): array
+    {
+        return [
+            'published_at' => 'datetime',
+        ];
+    }
+
     public function chapter(): BelongsTo
     {
         return $this->belongsTo(Chapter::class);

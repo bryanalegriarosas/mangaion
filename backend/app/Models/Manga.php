@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
 
 #[Fillable([
     'title',
@@ -31,6 +32,22 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class Manga extends Model
 {
+    // Más vistos esta semana
+    public function scopePopularThisWeek(Builder $query): Builder
+    {
+        return $query->withCount(['views as weekly_views' => function ($q) {
+            $q->where('created_at', '>=', now()->subWeek());
+        }])
+            ->orderByDesc('weekly_views');
+    }
+
+    // Tendencias (más vistos en general)
+    public function scopeTrending(Builder $query): Builder
+    {
+        return $query
+            ->withCount('views')
+            ->orderByDesc('views_count');
+    }
 
     public function getCoverImageUrlAttribute(): ?string
     {
