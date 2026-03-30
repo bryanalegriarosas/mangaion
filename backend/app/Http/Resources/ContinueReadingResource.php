@@ -33,7 +33,8 @@ class ContinueReadingResource extends JsonResource
             ]),
  
             'page'       => $lastPage,
-            'totalPages' => $totalPages,
+            'totalPages' => $this->whenLoaded('chapterVersion', 
+                fn() => $this->chapterVersion->pages->count()),
             'progress'   => $totalPages > 0
                 ? round(($lastPage / $totalPages) * 100)
                 : 0,

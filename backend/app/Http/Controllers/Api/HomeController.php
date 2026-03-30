@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Http\Resources\ChapterVersionResource;
 use App\Http\Resources\ContinueReadingResource;
 use App\Http\Resources\MangaResource;
@@ -71,7 +72,6 @@ class HomeController extends Controller
                 'genres:id,name,slug',
                 'ratings:id,manga_id,rating',
             ])
-            ->having('weekly_views', '>', 0)
             ->orderByDesc('weekly_views')
             ->limit(self::POPULAR_LIMIT)
             ->get();
@@ -142,8 +142,8 @@ class HomeController extends Controller
                 'manga:id,title,slug,cover_image',
                 'chapterVersion:id,chapter_id,slug,title',
                 'chapterVersion.chapter:id,chapter_number,volume_number',
+                'chapterVersion.pages:id,chapter_version_id',
             ])
-            ->withCount('chapterVersion.pages as total_pages')
             ->latest('updated_at')
             ->limit(self::CONTINUE_LIMIT)
             ->get();

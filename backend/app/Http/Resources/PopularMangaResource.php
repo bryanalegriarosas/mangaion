@@ -14,11 +14,12 @@ class PopularMangaResource extends MangaResource
      */
     public function toArray(Request $request): array
     {
-        return [
-            ...parent::toArray($request),           // todo lo de MangaResource
+        $parent = parent::toArray($request);
+
+        return array_merge($parent, [
             'readers' => (int) $this->weekly_views, // campo calculado por withCount
             'growth'  => $this->calculateGrowth(),
-        ];
+        ]);
     }
     
     private function calculateGrowth(): ?int
