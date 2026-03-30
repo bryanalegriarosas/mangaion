@@ -1,324 +1,259 @@
 <template>
-  <div class="text-gray-900">
+  <div class="min-h-screen bg-[#0d0d12] text-gray-100">
 
-    <!-- LOADING -->
-    <div v-if="loading" class="p-10 text-center text-gray-600">
-      Cargando...
-    </div>
+    <!-- ===================== -->
+    <!-- 💀 SKELETON / LOADING -->
+    <!-- ===================== -->
+    <template v-if="loading">
+      <div class="px-6 py-24 max-w-6xl mx-auto space-y-10 animate-pulse">
+        <div class="h-64 bg-gray-800/50 rounded-2xl"></div>
+        <div class="grid grid-cols-6 gap-4">
+          <div v-for="i in 6" :key="i" class="h-20 bg-gray-800/50 rounded-xl"></div>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div v-for="i in 8" :key="i" class="h-48 bg-gray-800/50 rounded-xl"></div>
+        </div>
+      </div>
+    </template>
+
+    <!-- ============ -->
+    <!-- ❌ ERROR     -->
+    <!-- ============ -->
+    <template v-else-if="error">
+      <div class="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center px-6">
+        <p class="text-5xl">😵</p>
+        <p class="text-xl font-bold text-white">Algo salió mal</p>
+        <p class="text-gray-400 text-sm">{{ error }}</p>
+        <button
+          class="mt-2 bg-red-500 hover:bg-red-400 px-6 py-3 rounded-xl text-white font-semibold transition-colors"
+          @click="getHomePage()"
+        >
+          Reintentar
+        </button>
+      </div>
+    </template>
 
     <template v-else>
 
       <!-- ================= -->
-      <!-- 🔓 GUEST VERSION -->
+      <!-- 🔓 GUEST VERSION  -->
       <!-- ================= -->
-      <div v-if="!isAuth">
+      <div v-if="!authStore.isAuth">
 
         <!-- HERO -->
-        <section class="relative overflow-hidden bg-gray-100">
-          <!-- Background gradient -->
-          <div class="absolute inset-0 bg-gradient-to-br from-gray-100 via-gray-50 to-slate-100"></div>
-          
-          <!-- Floating elements -->
-          <div class="absolute inset-0">
-            <div class="absolute top-20 left-10 w-20 h-20 bg-slate-200/20 rounded-full blur-xl animate-pulse"></div>
-            <div class="absolute top-40 right-20 w-32 h-32 bg-gray-200/20 rounded-full blur-xl animate-pulse delay-1000"></div>
-            <div class="absolute bottom-20 left-1/4 w-24 h-24 bg-blue-200/20 rounded-full blur-xl animate-pulse delay-2000"></div>
+        <section class="relative overflow-hidden min-h-[90vh] flex items-center">
+          <div class="absolute inset-0 bg-[#0d0d12]"></div>
+          <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_#1a0a2e_0%,_transparent_60%)]"></div>
+          <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_#1a0010_0%,_transparent_60%)]"></div>
+
+          <div class="absolute inset-0 overflow-hidden opacity-5">
+            <div class="absolute top-0 left-1/4 w-px h-full bg-white"></div>
+            <div class="absolute top-0 left-2/4 w-px h-full bg-white"></div>
+            <div class="absolute top-0 left-3/4 w-px h-full bg-white"></div>
+            <div class="absolute top-1/3 left-0 w-full h-px bg-white"></div>
+            <div class="absolute top-2/3 left-0 w-full h-px bg-white"></div>
           </div>
 
-          <div class="relative px-6 py-24 md:py-32 text-center">
-            <div class="max-w-4xl mx-auto">
-              <!-- Badge -->
-              <div class="inline-flex items-center gap-2 bg-gray-200 border border-gray-300 px-4 py-2 rounded-full text-gray-700 text-sm font-medium mb-6">
-                <span class="w-2 h-2 bg-gray-500 rounded-full animate-pulse"></span>
+          <div class="absolute top-20 left-10 w-72 h-72 bg-purple-900/20 rounded-full blur-3xl animate-pulse"></div>
+          <div class="absolute bottom-20 right-10 w-96 h-96 bg-red-900/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+
+          <div class="relative px-6 py-24 text-center w-full">
+            <div class="max-w-5xl mx-auto">
+              <div class="inline-flex items-center gap-2 bg-red-500/10 border border-red-500/30 px-4 py-2 rounded-full text-red-400 text-sm font-medium mb-8 backdrop-blur-sm">
+                <span class="w-2 h-2 bg-red-400 rounded-full animate-pulse"></span>
                 Nueva temporada disponible
               </div>
 
-              <!-- Main title -->
-              <h1 class="text-5xl md:text-7xl font-bold bg-gradient-to-r from-slate-700 via-gray-700 to-slate-800 bg-clip-text text-transparent mb-6">
-                Lee y comparte
+              <h1 class="text-6xl md:text-8xl font-black mb-4 leading-none tracking-tight">
+                <span class="text-white">Lee y comparte</span>
                 <br>
-                <span class="text-6xl md:text-8xl">manga</span>
+                <span
+                  class="bg-gradient-to-r from-red-400 via-pink-400 to-purple-400 bg-clip-text text-transparent"
+                  style="font-size: 1.15em;"
+                >
+                  manga
+                </span>
               </h1>
-              
-              <!-- Subtitle -->
-              <p class="text-xl md:text-2xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-                Miles de historias te esperan en la plataforma más grande de manga en español
+
+              <p class="text-lg md:text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+                Miles de historias te esperan. La plataforma de manga más grande en español, gratis y sin anuncios.
               </p>
 
-              <!-- Stats -->
-              <div class="flex flex-wrap justify-center gap-8 mb-10 text-gray-500">
-                <div class="text-center">
-                  <div class="text-3xl font-bold text-slate-700">10K+</div>
-                  <div class="text-sm">Títulos</div>
-                </div>
-                <div class="text-center">
-                  <div class="text-3xl font-bold text-gray-700">500K+</div>
-                  <div class="text-sm">Capítulos</div>
-                </div>
-                <div class="text-center">
-                  <div class="text-3xl font-bold text-slate-600">50K+</div>
-                  <div class="text-sm">Usuarios</div>
+              <div class="flex flex-wrap justify-center gap-12 mb-12">
+                <div v-for="stat in stats" :key="stat.label" class="text-center">
+                  <div class="text-4xl font-black text-white">{{ stat.value }}</div>
+                  <div class="text-sm text-gray-500 mt-1 uppercase tracking-widest">{{ stat.label }}</div>
                 </div>
               </div>
 
-              <!-- CTA Buttons -->
               <div class="flex flex-col sm:flex-row justify-center gap-4">
-                <button class="bg-gradient-to-r from-slate-700 to-gray-700 hover:from-slate-800 hover:to-gray-800 px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-slate-500/25 transform hover:scale-105 transition-all duration-200 text-white">
-                  <span class="flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                    </svg>
+                <RouterLink to="/register">
+                  <button class="bg-red-500 hover:bg-red-400 px-8 py-4 rounded-xl font-bold text-lg shadow-[0_0_30px_rgba(239,68,68,0.3)] hover:shadow-[0_0_50px_rgba(239,68,68,0.5)] transform hover:scale-105 transition-all duration-200 text-white flex items-center gap-2">
                     Registrarse gratis
-                  </span>
-                </button>
-                <button class="border border-gray-400 hover:border-gray-500 px-8 py-4 rounded-xl font-semibold text-lg bg-gray-50/80 hover:bg-gray-100 transform hover:scale-105 transition-all duration-200">
-                  <span class="flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
+                  </button>
+                </RouterLink>
+                <RouterLink to="/catalog">
+                  <button class="border border-gray-700 hover:border-gray-500 px-8 py-4 rounded-xl font-bold text-lg bg-white/5 hover:bg-white/10 backdrop-blur-sm transform hover:scale-105 transition-all duration-200 flex items-center gap-2 text-gray-300 hover:text-white">
                     Explorar catálogo
-                  </span>
-                </button>
+                  </button>
+                </RouterLink>
               </div>
             </div>
           </div>
         </section>
 
         <!-- CATEGORIES -->
-        <section class="px-6 py-12 bg-gray-100/50 backdrop-blur-sm">
+        <section class="px-6 py-16 border-t border-white/5">
           <div class="max-w-6xl mx-auto">
-            <h2 class="text-2xl font-bold mb-8 text-center text-gray-800">Explora por género</h2>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              <div class="group cursor-pointer">
-                <div class="bg-gradient-to-br from-red-100 to-orange-100 border border-red-200 rounded-xl p-4 text-center hover:from-red-200 hover:to-orange-200 transition-all duration-200 group-hover:scale-105 shadow-sm hover:shadow-md">
-                  <div class="text-2xl mb-2">⚔️</div>
-                  <div class="text-sm font-medium text-gray-700">Acción</div>
+            <h2 class="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500 mb-6">
+              Explorar por género
+            </h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              <RouterLink
+                v-for="genre in genres"
+                :key="genre.slug"
+                :to="`/catalog?genre=${genre.slug}`"
+              >
+                <div
+                  :class="genre.bg"
+                  class="rounded-xl p-4 text-center transition-all duration-200 hover:scale-105 hover:brightness-125 border border-white/5 cursor-pointer"
+                >
+                  <div class="text-2xl mb-2">{{ genre.emoji }}</div>
+                  <div class="text-sm font-semibold text-white/80">{{ genre.name }}</div>
                 </div>
-              </div>
-              <div class="group cursor-pointer">
-                <div class="bg-gradient-to-br from-pink-100 to-purple-100 border border-pink-200 rounded-xl p-4 text-center hover:from-pink-200 hover:to-purple-200 transition-all duration-200 group-hover:scale-105 shadow-sm hover:shadow-md">
-                  <div class="text-2xl mb-2">💕</div>
-                  <div class="text-sm font-medium text-gray-700">Romance</div>
-                </div>
-              </div>
-              <div class="group cursor-pointer">
-                <div class="bg-gradient-to-br from-blue-100 to-cyan-100 border border-blue-200 rounded-xl p-4 text-center hover:from-blue-200 hover:to-cyan-200 transition-all duration-200 group-hover:scale-105 shadow-sm hover:shadow-md">
-                  <div class="text-2xl mb-2">🎭</div>
-                  <div class="text-sm font-medium text-gray-700">Drama</div>
-                </div>
-              </div>
-              <div class="group cursor-pointer">
-                <div class="bg-gradient-to-br from-green-100 to-emerald-100 border border-green-200 rounded-xl p-4 text-center hover:from-green-200 hover:to-emerald-200 transition-all duration-200 group-hover:scale-105 shadow-sm hover:shadow-md">
-                  <div class="text-2xl mb-2">😂</div>
-                  <div class="text-sm font-medium text-gray-700">Comedia</div>
-                </div>
-              </div>
-              <div class="group cursor-pointer">
-                <div class="bg-gradient-to-br from-purple-100 to-indigo-100 border border-purple-200 rounded-xl p-4 text-center hover:from-purple-200 hover:to-indigo-200 transition-all duration-200 group-hover:scale-105 shadow-sm hover:shadow-md">
-                  <div class="text-2xl mb-2">✨</div>
-                  <div class="text-sm font-medium text-gray-700">Fantasía</div>
-                </div>
-              </div>
-              <div class="group cursor-pointer">
-                <div class="bg-gradient-to-br from-gray-100 to-slate-100 border border-gray-200 rounded-xl p-4 text-center hover:from-gray-200 hover:to-slate-200 transition-all duration-200 group-hover:scale-105 shadow-sm hover:shadow-md">
-                  <div class="text-2xl mb-2">🔮</div>
-                  <div class="text-sm font-medium text-gray-700">Sci-Fi</div>
-                </div>
-              </div>
+              </RouterLink>
             </div>
           </div>
         </section>
 
         <!-- TRENDING -->
-        <MangaCarousel
-          title="🔥 Tendencias"
-          :items="trending"
-        />
+        <MangaCarousel title="🔥 Tendencias" :items="trending" />
 
-        <!-- POPULAR THIS WEEK -->
-        <section class="px-6 py-12 bg-gray-100/30 backdrop-blur-sm">
+        <!-- POPULAR ESTA SEMANA -->
+        <section class="px-6 py-16 border-t border-white/5" v-if="popular.length">
           <div class="max-w-6xl mx-auto">
             <div class="flex items-center justify-between mb-8">
-              <h2 class="text-2xl font-bold text-gray-800">📈 Popular esta semana</h2>
-              <button class="text-slate-600 hover:text-slate-700 text-sm font-medium">
+              <div>
+                <h2 class="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500 mb-1">Esta semana</h2>
+                <p class="text-2xl font-black text-white">📈 Lo más popular</p>
+              </div>
+              <RouterLink to="/catalog?sort=popular" class="text-red-400 hover:text-red-300 text-sm font-medium transition-colors">
                 Ver todo →
-              </button>
+              </RouterLink>
             </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <!-- Top 1 -->
-              <div class="relative group">
-                <div class="absolute -inset-1 bg-gradient-to-r from-purple-400 to-pink-400 rounded-xl blur opacity-25 group-hover:opacity-75 transition duration-300"></div>
-                <div class="relative bg-gray-50 border border-gray-200 rounded-xl p-6 shadow-sm">
-                  <div class="flex items-start justify-between mb-4">
-                    <div class="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">#1</div>
-                    <div class="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-xs font-semibold">
-                      +15%
-                    </div>
-                  </div>
-                  <div class="flex gap-4">
-                    <img src="/example.png" class="w-16 h-20 object-cover rounded-lg" alt="Manga">
-                    <div class="flex-1">
-                      <h3 class="font-semibold mb-1 text-gray-800">One Piece</h3>
-                      <p class="text-sm text-gray-600 mb-2">Aventura</p>
-                      <div class="flex items-center gap-2 text-xs text-gray-500">
-                        <span class="flex items-center gap-1">
-                          <svg class="w-3 h-3 fill-current text-yellow-500" viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                          </svg>
-                          4.9
-                        </span>
-                        <span>1.2M lectores</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
-              <!-- Top 2 -->
-              <div class="relative group">
-                <div class="absolute -inset-1 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-xl blur opacity-25 group-hover:opacity-75 transition duration-300"></div>
-                <div class="relative bg-gray-50 border border-gray-200 rounded-xl p-6 shadow-sm">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <RouterLink
+                v-for="(manga, index) in popular"
+                :key="manga.id"
+                :to="`/manga/${manga.id}`"
+                class="relative group cursor-pointer"
+              >
+                <div
+                  :class="rankGlow[index]"
+                  class="absolute -inset-px rounded-xl blur opacity-0 group-hover:opacity-100 transition duration-300"
+                ></div>
+                <div class="relative bg-gray-900 border border-white/10 rounded-xl p-5 hover:border-white/20 transition-all duration-200">
                   <div class="flex items-start justify-between mb-4">
-                    <div class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">#2</div>
-                    <div class="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-xs font-semibold">
-                      +12%
+                    <div :class="rankColors[index]" class="text-3xl font-black">
+                      #{{ index + 1 }}
+                    </div>
+                    <div
+                      v-if="manga.growth !== null"
+                      :class="manga.growth >= 0
+                        ? 'bg-green-500/15 text-green-400'
+                        : 'bg-red-500/15 text-red-400'"
+                      class="px-2 py-1 rounded-lg text-xs font-bold"
+                    >
+                      {{ manga.growth >= 0 ? '+' : '' }}{{ manga.growth }}%
                     </div>
                   </div>
                   <div class="flex gap-4">
-                    <img src="/example.png" class="w-16 h-20 object-cover rounded-lg" alt="Manga">
-                    <div class="flex-1">
-                      <h3 class="font-semibold mb-1 text-gray-800">Attack on Titan</h3>
-                      <p class="text-sm text-gray-600 mb-2">Acción</p>
-                      <div class="flex items-center gap-2 text-xs text-gray-500">
-                        <span class="flex items-center gap-1">
-                          <svg class="w-3 h-3 fill-current text-yellow-500" viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                          </svg>
-                          4.8
-                        </span>
-                        <span>980K lectores</span>
+                    <img
+                      :src="manga.cover ?? '/placeholder-cover.jpg'"
+                      :alt="manga.title"
+                      class="w-16 h-20 object-cover rounded-lg shadow-lg flex-shrink-0 bg-gray-800"
+                    >
+                    <div class="flex-1 min-w-0">
+                      <h3 class="font-bold mb-1 text-white text-sm leading-tight line-clamp-2">
+                        {{ manga.title }}
+                      </h3>
+                      <p class="text-xs text-gray-500 mb-2">{{ manga.genre }}</p>
+                      <div class="flex items-center gap-1 text-xs text-gray-400">
+                        <svg class="w-3 h-3 fill-yellow-400 flex-shrink-0" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
+                        <span class="font-semibold text-white">{{ manga.rating ?? '—' }}</span>
+                        <span class="text-gray-600">·</span>
+                        <span>{{ formatReaders(manga.readers) }}</span>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-
-              <!-- Top 3 -->
-              <div class="relative group">
-                <div class="absolute -inset-1 bg-gradient-to-r from-green-400 to-emerald-400 rounded-xl blur opacity-25 group-hover:opacity-75 transition duration-300"></div>
-                <div class="relative bg-gray-50 border border-gray-200 rounded-xl p-6 shadow-sm">
-                  <div class="flex items-start justify-between mb-4">
-                    <div class="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">#3</div>
-                    <div class="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-xs font-semibold">
-                      +8%
-                    </div>
-                  </div>
-                  <div class="flex gap-4">
-                    <img src="/example.png" class="w-16 h-20 object-cover rounded-lg" alt="Manga">
-                    <div class="flex-1">
-                      <h3 class="font-semibold mb-1 text-gray-800">Demon Slayer</h3>
-                      <p class="text-sm text-gray-600 mb-2">Acción</p>
-                      <div class="flex items-center gap-2 text-xs text-gray-500">
-                        <span class="flex items-center gap-1">
-                          <svg class="w-3 h-3 fill-current text-yellow-500" viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                          </svg>
-                          4.7
-                        </span>
-                        <span>750K lectores</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Top 4 -->
-              <div class="relative group">
-                <div class="absolute -inset-1 bg-gradient-to-r from-orange-400 to-red-400 rounded-xl blur opacity-25 group-hover:opacity-75 transition duration-300"></div>
-                <div class="relative bg-gray-50 border border-gray-200 rounded-xl p-6 shadow-sm">
-                  <div class="flex items-start justify-between mb-4">
-                    <div class="text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">#4</div>
-                    <div class="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-xs font-semibold">
-                      +5%
-                    </div>
-                  </div>
-                  <div class="flex gap-4">
-                    <img src="/example.png" class="w-16 h-20 object-cover rounded-lg" alt="Manga">
-                    <div class="flex-1">
-                      <h3 class="font-semibold mb-1 text-gray-800">My Hero Academia</h3>
-                      <p class="text-sm text-gray-600 mb-2">Superhéroes</p>
-                      <div class="flex items-center gap-2 text-xs text-gray-500">
-                        <span class="flex items-center gap-1">
-                          <svg class="w-3 h-3 fill-current text-yellow-500" viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                          </svg>
-                          4.6
-                        </span>
-                        <span>620K lectores</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              </RouterLink>
             </div>
           </div>
         </section>
 
-        <!-- LATEST -->
-        <MangaList
-          title="🆕 Últimos capítulos"
-          :items="latestChapters"
-        />
+        <!-- ÚLTIMOS CAPÍTULOS -->
+        <MangaList title="🆕 Últimos capítulos" :items="latestChapters" />
 
         <!-- CTA -->
-        <section class="text-center py-16 bg-gray-100/40 backdrop-blur-sm">
-          <h2 class="text-2xl font-bold text-gray-800">
-            ¿Quieres subir tu manga?
-          </h2>
-          <button class="mt-4 bg-gradient-to-r from-slate-700 to-gray-700 hover:from-slate-800 hover:to-gray-800 px-6 py-3 rounded-xl text-white font-semibold shadow-lg hover:shadow-slate-500/25 transform hover:scale-105 transition-all duration-200">
-            Crear cuenta
-          </button>
+        <section class="px-6 py-24 border-t border-white/5">
+          <div class="max-w-3xl mx-auto text-center">
+            <p class="text-sm font-semibold uppercase tracking-[0.2em] text-red-400 mb-4">Para creadores</p>
+            <h2 class="text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
+              ¿Tienes tu propio manga?
+              <br>
+              <span class="text-gray-500">Compártelo aquí.</span>
+            </h2>
+            <RouterLink to="/register">
+              <button class="bg-red-500 hover:bg-red-400 px-10 py-4 rounded-xl font-bold text-lg text-white shadow-[0_0_40px_rgba(239,68,68,0.25)] hover:shadow-[0_0_60px_rgba(239,68,68,0.4)] transform hover:scale-105 transition-all duration-200">
+                Crear cuenta gratis
+              </button>
+            </RouterLink>
+          </div>
         </section>
 
       </div>
 
       <!-- ================= -->
-      <!-- 🔐 AUTH VERSION -->
+      <!-- 🔐 AUTH VERSION  -->
       <!-- ================= -->
-      <div v-else class="space-y-10">
+      <div v-else class="space-y-0">
 
-        <!-- BIENVENIDA -->
-        <section class="px-6 pt-10 bg-gray-100/10 backdrop-blur-sm">
-          <h1 class="text-2xl font-bold text-gray-800">
-            Bienvenido de nuevo, {{ user.name }}
-          </h1>
+        <!-- WELCOME BANNER -->
+        <section class="px-6 pt-12 pb-8 border-b border-white/5">
+          <div class="max-w-6xl mx-auto">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <p class="text-sm text-gray-500 uppercase tracking-widest mb-1">Bienvenido de vuelta</p>
+                <h1 class="text-3xl font-black text-white">
+                  {{ authStore.user?.name }}<span class="text-red-400">.</span>
+                </h1>
+              </div>
+              <div class="flex gap-6">
+                <div class="text-center">
+                  <div class="text-xl font-bold text-white">{{ authStore.user?.chaptersRead ?? 0 }}</div>
+                  <div class="text-xs text-gray-500 uppercase tracking-wider">Caps. leídos</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-xl font-bold text-white">{{ authStore.user?.favorites ?? 0 }}</div>
+                  <div class="text-xs text-gray-500 uppercase tracking-wider">Favoritos</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-xl font-bold text-white">{{ authStore.user?.following ?? 0 }}</div>
+                  <div class="text-xs text-gray-500 uppercase tracking-wider">Siguiendo</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
-        <!-- CONTINUE READING -->
-        <MangaContinueReading
-          v-if="continueReading.length"
-          :items="continueReading"
-        />
-
-        <!-- RECOMMENDED -->
-        <MangaCarousel
-          v-if="recommended.length"
-          title="⭐ Recomendados para ti"
-          :items="recommended"
-        />
-
-        <!-- TRENDING -->
-        <MangaCarousel
-          title="🔥 Tendencias"
-          :items="trending"
-        />
-
-        <!-- LATEST -->
-        <MangaList
-          title="🆕 Últimos capítulos"
-          :items="latestChapters"
-        />
+        <MangaContinueReading v-if="continueReading.length" :items="continueReading" />
+        <MangaCarousel v-if="recommended.length" title="⭐ Recomendados para ti" :items="recommended" />
+        <MangaCarousel title="🔥 Tendencias" :items="trending" />
+        <MangaList title="🆕 Últimos capítulos" :items="latestChapters" />
 
       </div>
 
@@ -327,64 +262,69 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-
-// Components
-import MangaCarousel from '@/components/MangaCarousel.vue';
-import MangaList from '@/components/MangaList.vue';
+import { rankColors, rankGlow } from '@/helpers/utils';
+import { formatReaders } from '@/helpers';
+import { ref, onMounted }  from 'vue';
+import { RouterLink }      from 'vue-router';
+import { useAuthStore } from '@/stores/Auth';
+import MangaCarousel        from '@/components/MangaCarousel.vue';
+import MangaList            from '@/components/MangaList.vue';
 import MangaContinueReading from '@/components/MangaContinueReading.vue';
-import Api from '@/services/Api';
+import { getHomePage } from '@/repositories/HomeService';
+import type {
+  Manga,
+  PopularManga,
+  ChapterVersion,
+  ContinueReading,
+} from '@/types/Manga';
 
-// Types
-interface Manga {
-  id: number
-  title: string
-  cover: string
-}
+const authStore = useAuthStore();
+const loading  = ref(true);
+const error    = ref<string | null>(null);
 
-interface Chapter {
-  id: number
-  title: string
-  manga: Manga
-}
+const trending        = ref<Manga[]>([]);
+const popular         = ref<PopularManga[]>([]);
+const latestChapters  = ref<ChapterVersion[]>([]);
+const continueReading = ref<ContinueReading[]>([]);
+const recommended     = ref<Manga[]>([]);
 
-interface ContinueReading {
-  manga: Manga
-  chapter: Chapter
-  page: number
-}
+const stats = [
+  { value: '10K+',  label: 'Títulos'   },
+  { value: '500K+', label: 'Capítulos' },
+  { value: '50K+',  label: 'Usuarios'  },
+];
 
-const user = ref<any>(null)
+const genres = [
+  { name: 'Acción',   emoji: '⚔️', slug: 'action',  bg: 'bg-gradient-to-br from-red-900/60 to-orange-900/40'    },
+  { name: 'Romance',  emoji: '💕', slug: 'romance', bg: 'bg-gradient-to-br from-pink-900/60 to-purple-900/40'   },
+  { name: 'Drama',    emoji: '🎭', slug: 'drama',   bg: 'bg-gradient-to-br from-blue-900/60 to-cyan-900/40'     },
+  { name: 'Comedia',  emoji: '😂', slug: 'comedy',  bg: 'bg-gradient-to-br from-green-900/60 to-emerald-900/40' },
+  { name: 'Fantasía', emoji: '✨', slug: 'fantasy', bg: 'bg-gradient-to-br from-purple-900/60 to-indigo-900/40' },
+  { name: 'Sci-Fi',   emoji: '🔮', slug: 'sci-fi',  bg: 'bg-gradient-to-br from-slate-800/80 to-gray-900/60'    },
+];
 
-const trending = ref<Manga[]>([])
-const latestChapters = ref<Chapter[]>([])
-const continueReading = ref<ContinueReading[]>([])
-const recommended = ref<Manga[]>([])
-
-const loading = ref(true)
-
-// Detectar si está autenticado
-const isAuth = computed(() => !!user.value)
-
-// Fetch data
-const fetchHome = async () => {
+const loadHomePage = async (): Promise<void> => {
+  loading.value = true;
+  error.value = null;
   try {
-    const { data } = await Api.get('/home')
+    const response = await getHomePage();
+    trending.value = response?.trending;
+    popular.value = response?.popular;
+    latestChapters.value = response?.latestChapters || [];
 
-    trending.value = data.trending
-    latestChapters.value = data.latestChapters
-
-    if (data.user) {
-      user.value = data.user
-      continueReading.value = data.continueReading || []
-      recommended.value = data.recommended || []
+    if (response.user) {
+      authStore.hydrateFromHome(response?.user);
+      continueReading.value = response?.continueReading || [];
+      recommended.value = response?.recommended || [];
     }
-  } catch (error) {
-    console.error(error)
+  } catch (e) {
+    error.value = `No se pudo cargar el contenido. Intenta de nuevo. ${e}`;
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
-onMounted(fetchHome)
+onMounted(async () => {
+  await loadHomePage();
+});
 </script>

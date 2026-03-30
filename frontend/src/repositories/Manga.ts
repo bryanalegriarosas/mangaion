@@ -5,7 +5,7 @@ export const getMangas = async () => {
   return data;
 };
 
-export const getManga = async (slug: string) => {
-  const { data } = await Api.get(`/mangas/${slug}`);
+export const getManga = async (id: number) => {
+  const { data } = await Api.get(`/mangas/${id}`);
   return data;
 };
