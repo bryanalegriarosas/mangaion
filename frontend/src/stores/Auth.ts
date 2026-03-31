@@ -25,5 +25,8 @@ export const useAuthStore = defineStore('auth', {
         hydrateFromHome(data: User): void {
             this.user = data;
         },
+        clearToken(): void {
+            this.token = null;
+        },
     },
 });

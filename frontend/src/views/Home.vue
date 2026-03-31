@@ -265,7 +265,7 @@
                   Bienvenido de vuelta
                 </p>
                 <h1 class="text-3xl font-black text-gray-900 dark:text-white">
-                  {{ store.user?.name }}<span class="text-red-500 dark:text-red-400">.</span>
+                  {{ store.user?.username ?? store.user?.name }}<span class="text-red-500 dark:text-red-400">.</span>
                 </h1>
               </div>
               <div class="flex gap-6">

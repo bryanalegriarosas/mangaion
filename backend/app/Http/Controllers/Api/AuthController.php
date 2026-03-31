@@ -36,7 +36,7 @@ class AuthController extends Controller
         ]);
 
         // 🎭 Asignar rol por defecto
-        $role = Role::where('name', 'user')->first();
+        $role = Role::where('name', Role::USER)->first();
 
         if ($role) {
             $user->roles()->syncWithoutDetaching([$role->id]);

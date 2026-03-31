@@ -12,7 +12,19 @@ export interface RegisterParams {
   avatar?: File | null,
 };
 
+export interface LoginParams {
+  email: string
+  password: string
+  remember?: boolean
+};
+
 export interface RegisterResponse {
+  message: string,
+  token: string,
+  user: User,
+};
+
+export interface LoginResponse {
   message: string,
   token: string,
   user: User,
@@ -24,7 +36,8 @@ export interface User {
   last_name?: string,
   username?: string,
   email: string,
-  avatar?: string,
+  email_verified_at?: string | null,
+  avatar?: string | null,
   created_at?: ISODateString,
   updated_at?: ISODateString,
   roles?: Roles[];
