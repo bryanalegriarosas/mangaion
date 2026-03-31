@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable(['user_id', 'manga_id', 'chapter_version_id', 'last_page'])]
 class ReadingHistory extends Model
 {
+    protected $table = 'reading_history';
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

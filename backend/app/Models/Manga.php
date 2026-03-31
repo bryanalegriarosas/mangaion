@@ -11,11 +11,12 @@ use App\Models\Rating;
 use App\Models\Tag;
 use App\Models\View;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Builder;
 
 #[Fillable([
     'title',
@@ -32,6 +33,7 @@ use Illuminate\Database\Eloquent\Builder;
 ])]
 class Manga extends Model
 {
+    protected $appends = ['cover_image_url'];
     // Más vistos esta semana
     public function scopePopularThisWeek(Builder $query): Builder
     {
@@ -49,11 +51,13 @@ class Manga extends Model
             ->orderByDesc('views_count');
     }
 
-    public function getCoverImageUrlAttribute(): ?string
+    protected function coverImageUrl(): Attribute
     {
-        return $this->cover_image
-            ? asset('storage/' . $this->cover_image)
-            : null;
+        return Attribute::make(
+            get: fn() => $this->cover_image
+                ? asset('storage/' . $this->cover_image)
+                : null,
+        );
     }
 
     public function creator(): BelongsTo

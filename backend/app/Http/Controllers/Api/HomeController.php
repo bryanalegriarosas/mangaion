@@ -24,7 +24,7 @@ class HomeController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $user = $request->user('sanctum');
 
         return response()->json([
             'trending'       => $this->getTrending(),

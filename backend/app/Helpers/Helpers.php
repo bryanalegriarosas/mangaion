@@ -4,7 +4,7 @@ namespace App\Helpers;
 
 use App\Models\Manga;
 
-class Helper
+class Helpers
 {
     public static function formatNumber(float $number): int|float
     {

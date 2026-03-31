@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Helpers\Helper;
+use App\Helpers\Helpers;
 use App\Http\Controllers\Controller;
 use App\Models\Chapter;
 use App\Models\ChapterVersion;
@@ -19,7 +19,7 @@ use Illuminate\Support\Str;
 
 class ChapterController extends Controller
 {
-    public function __construct(private Helper $helper) {}
+    public function __construct(private Helpers $helper) {}
 
     /**
      * 📖 Listar capítulos de un manga

@@ -7,7 +7,6 @@ use App\Http\Controllers\Api\ScanGroupController;
 use App\Http\Controllers\Api\HomeController;
 use Illuminate\Support\Facades\Route;
 
-
 //Rutas Publicas
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);

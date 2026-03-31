@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -18,12 +19,20 @@ class AuthController extends Controller
      */
     public function register(RegisterResquest $request): JsonResponse
     {
+        $avatarPath = null;
+        if ($request->hasFile('avatar')) {
+            $file = $request->file('avatar');
+            $fileName = Str::uuid() . '.' . $file->getClientOriginalExtension();
+            $avatarPath = $file->storeAs('avatars', $fileName, 'public');
+        }
+
         $user = User::create([
             'name' => $request->name,
             'last_name' => $request->last_name,
             'username' => $request->username,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'avatar' => $avatarPath,
         ]);
 
         // 🎭 Asignar rol por defecto

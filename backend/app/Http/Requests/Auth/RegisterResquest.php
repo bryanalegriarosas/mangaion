@@ -17,6 +17,7 @@ class RegisterResquest extends FormRequest
             'name' => 'required|string|max:255',
             'last_name' => 'nullable|string|max:255',
             'username' => 'nullable|string|max:255|unique:users',
+            'avatar' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'email' => 'required|email|unique:users',
             'password' => 'required|min:8|confirmed',
         ];
