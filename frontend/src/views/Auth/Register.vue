@@ -306,7 +306,7 @@ const form = reactive<RegisterParams>({
   password: '',
   password_confirmation: '',
   avatar: null,
-})
+});
 
 const errors = reactive<Record<keyof RegisterParams, string>>({
   name: '',
@@ -315,8 +315,8 @@ const errors = reactive<Record<keyof RegisterParams, string>>({
   email: '',
   password: '',
   password_confirmation: '',
-  avatar: ''
-})
+  avatar: '',
+});
 
 const validateForm = (): boolean => {
   // Reset errors
@@ -324,7 +324,7 @@ const validateForm = (): boolean => {
     errors[key as keyof typeof errors] = ''
   })
 
-  let isValid = true
+  let isValid = true;
 
   // Name validation
   if (!form.name.trim()) {
@@ -372,13 +372,13 @@ const validateForm = (): boolean => {
     isValid = false
   }
 
-  return isValid
+  return isValid;
 }
 
 const handleRegister = async (): Promise<void> => {
-  if (!validateForm()) return
+  if (!validateForm()) return;
 
-  loading.value = true
+  loading.value = true;
   error.value = null;
 
   try {
@@ -406,13 +406,13 @@ const handleAvatarChange = (event: Event): void => {
     // Validar que sea una imagen
     if (!file.type.startsWith('image/')) {
       errors.avatar = 'El archivo debe ser una imagen'
-      return
+      return;
     }
     
     // Validar tamaño (2MB)
     if (file.size > 2 * 1024 * 1024) {
       errors.avatar = 'La imagen no debe pesar más de 2MB'
-      return
+      return;
     }
     
     // Limpiar error anterior
@@ -431,9 +431,9 @@ const handleAvatarChange = (event: Event): void => {
 }
 
 const removeAvatar = (): void => {
-  form.avatar = null
-  avatarPreview.value = null
-  errors.avatar = ''
-  avatarInput.value = null
+  form.avatar = null;
+  avatarPreview.value = null;
+  errors.avatar = '';
+  avatarInput.value = null;
 }
 </script>

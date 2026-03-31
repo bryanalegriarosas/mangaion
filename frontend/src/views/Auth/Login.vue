@@ -177,31 +177,30 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/Auth'
-import { login } from '@/repositories/Auth'
-import type { LoginParams } from '@/types/Auth'
+import { ref, reactive } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/Auth';
+import { login } from '@/repositories/Auth';
+import type { LoginParams } from '@/types/Auth';
 
 // ─── Router & Store ───────────────────────────────────────────────────────
-const router = useRouter()
-const store = useAuthStore()
+const router = useRouter();
+const store = useAuthStore();
 
 // ─── State ──────────────────────────────────────────────────────────────────
-const loading = ref(false)
-const error = ref<string | null>(null)
-const showPassword = ref(false)
+const loading = ref(false);
+const error = ref<string | null>(null);
+const showPassword = ref(false);
 
 const form = reactive<LoginParams>({
   email: '',
   password: '',
-  remember: false
-})
+});
 
 const errors = reactive({
   email: '',
   password: ''
-})
+});
 
 // ─── Methods ───────────────────────────────────────────────────────────────
 const validateForm = (): boolean => {
