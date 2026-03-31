@@ -9,4 +9,4 @@ const pinia = createPinia();
 
 VueApp.use(pinia);
 VueApp.use(router);
-VueApp.mount('#app')
+VueApp.mount('#app');

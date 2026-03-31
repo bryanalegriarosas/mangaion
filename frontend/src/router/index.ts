@@ -10,6 +10,11 @@ const routes = [
     component: Home,
   },
   {
+    path: '/register',
+    name: 'register',
+    component: () => import('@/views/Register.vue'),
+  },
+  {
     path: '/mangas',
     name: 'manga.list',
     component: () => import('@/views/Manga/MangaList.vue'),

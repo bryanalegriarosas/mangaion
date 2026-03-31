@@ -1,6 +1,4 @@
-// ─────────────────────────────────────────────────────────────────
-// Interfaces que mapean 1:1 con los Laravel Resources del backend
-// ─────────────────────────────────────────────────────────────────
+import type { User } from "./Auth"
 
 // ── GenreResource ────────────────────────────────────────────────
 export interface Genre {
@@ -71,24 +69,13 @@ export interface ContinueReading {
   progress:   number  // 0-100
 }
 
-// ── User (formatUser en HomeController) ─────────────────────────
-export interface AuthUser {
-  id:           number
-  name:         string
-  username:     string
-  avatar:       string | null
-  chaptersRead: number
-  favorites:    number
-  following:    number
-}
-
 // ── Respuesta completa del endpoint GET /home ────────────────────
 export interface HomeResponse {
   trending:       Manga[]
   popular:        PopularManga[]
   latestChapters: ChapterVersion[]
   // Solo presentes si el usuario está autenticado
-  user?:            AuthUser
+  user?:            User,
   continueReading?: ContinueReading[]
   recommended?:     Manga[]
 }

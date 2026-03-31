@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-white dark:bg-gray-900 transition-colors">
     <NavBar />
-    <main>
+    <main class="text-gray-900 dark:text-gray-100">
       <router-view />
     </main>
   </div>
