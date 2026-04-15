@@ -36,9 +36,9 @@
     <template v-else>
 
       <!-- ================= -->
-      <!-- 🔓 GUEST VERSION  -->
+      <!-- � HOME VERSION  -->
       <!-- ================= -->
-      <div v-if="!store.isAuth">
+      <div class="space-y-0">
 
         <!-- HERO -->
         <section class="relative overflow-hidden min-h-[90vh] flex items-center">
@@ -78,7 +78,7 @@
             <div class="max-w-5xl mx-auto">
 
               <!-- Badge -->
-              <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-8 backdrop-blur-sm
+              <div v-if="!store.isAuth" class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-8 backdrop-blur-sm
                           text-red-600 dark:text-red-400
                           bg-red-50 border border-red-200
                           dark:bg-red-500/10 dark:border-red-500/30">
@@ -112,24 +112,46 @@
 
               <!-- CTAs -->
               <div class="flex flex-col sm:flex-row justify-center gap-4">
-                <RouterLink to="/register">
-                  <button class="bg-red-500 hover:bg-red-400 px-8 py-4 rounded-xl font-bold text-lg text-white
-                                 shadow-[0_0_30px_rgba(239,68,68,0.3)] hover:shadow-[0_0_50px_rgba(239,68,68,0.5)]
-                                 transform hover:scale-105 transition-all duration-200 flex items-center gap-2">
-                    Registrarse gratis
-                  </button>
-                </RouterLink>
-                <RouterLink to="/catalog">
-                  <button class="px-8 py-4 rounded-xl font-bold text-lg backdrop-blur-sm
-                                 transform hover:scale-105 transition-all duration-200 flex items-center gap-2
-                                 border border-gray-300 dark:border-gray-700
-                                 bg-white/80 dark:bg-white/5
-                                 hover:bg-gray-100 dark:hover:bg-white/10
-                                 text-gray-700 dark:text-gray-300
-                                 hover:text-gray-900 dark:hover:text-white">
-                    Explorar catálogo
-                  </button>
-                </RouterLink>
+                <template v-if="!store.isAuth">
+                  <RouterLink to="/register">
+                    <button class="bg-red-500 hover:bg-red-400 px-8 py-4 rounded-xl font-bold text-lg text-white
+                                   shadow-[0_0_30px_rgba(239,68,68,0.3)] hover:shadow-[0_0_50px_rgba(239,68,68,0.5)]
+                                   transform hover:scale-105 transition-all duration-200 flex items-center gap-2">
+                      Registrarse gratis
+                    </button>
+                  </RouterLink>
+                  <RouterLink to="/catalog">
+                    <button class="px-8 py-4 rounded-xl font-bold text-lg backdrop-blur-sm
+                                   transform hover:scale-105 transition-all duration-200 flex items-center gap-2
+                                   border border-gray-300 dark:border-gray-700
+                                   bg-white/80 dark:bg-white/5
+                                   hover:bg-gray-100 dark:hover:bg-white/10
+                                   text-gray-700 dark:text-gray-300
+                                   hover:text-gray-900 dark:hover:text-white">
+                      Explorar catálogo
+                    </button>
+                  </RouterLink>
+                </template>
+                <template v-else>
+                  <RouterLink to="/dashboard">
+                    <button class="bg-red-500 hover:bg-red-400 px-8 py-4 rounded-xl font-bold text-lg text-white
+                                   shadow-[0_0_30px_rgba(239,68,68,0.3)] hover:shadow-[0_0_50px_rgba(239,68,68,0.5)]
+                                   transform hover:scale-105 transition-all duration-200 flex items-center gap-2">
+                      Ir a mi Dashboard
+                    </button>
+                  </RouterLink>
+                  <RouterLink to="/mangas">
+                    <button class="px-8 py-4 rounded-xl font-bold text-lg backdrop-blur-sm
+                                   transform hover:scale-105 transition-all duration-200 flex items-center gap-2
+                                   border border-gray-300 dark:border-gray-700
+                                   bg-white/80 dark:bg-white/5
+                                   hover:bg-gray-100 dark:hover:bg-white/10
+                                   text-gray-700 dark:text-gray-300
+                                   hover:text-gray-900 dark:hover:text-white">
+                      Explorar mangas
+                    </button>
+                  </RouterLink>
+                </template>
               </div>
 
             </div>
@@ -227,7 +249,7 @@
         <MangaList title="🆕 Últimos capítulos" :items="latestChapters" />
 
         <!-- CTA -->
-        <section class="px-6 py-24 border-t border-gray-200 dark:border-white/5">
+        <section v-if="!store.isAuth" class="px-6 py-24 border-t border-gray-200 dark:border-white/5">
           <div class="max-w-3xl mx-auto text-center">
             <p class="text-sm font-semibold uppercase tracking-[0.2em] mb-4
                       text-red-500 dark:text-red-400">
@@ -251,40 +273,6 @@
 
       </div>
 
-      <!-- ================= -->
-      <!-- 🔐 AUTH VERSION  -->
-      <!-- ================= -->
-      <div v-else class="space-y-0">
-
-        <!-- WELCOME BANNER -->
-        <section class="px-6 pt-12 pb-8 border-b border-gray-200 dark:border-white/5">
-          <div class="max-w-6xl mx-auto">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <p class="text-sm uppercase tracking-widest mb-1 text-gray-500">
-                  Bienvenido de vuelta
-                </p>
-                <h1 class="text-3xl font-black text-gray-900 dark:text-white">
-                  {{ store.user?.username ?? store.user?.name }}<span class="text-red-500 dark:text-red-400">.</span>
-                </h1>
-              </div>
-              <div class="flex gap-6">
-                <div v-for="stat in userStats" :key="stat.label" class="text-center">
-                  <div class="text-xl font-bold text-gray-900 dark:text-white">{{ stat.value }}</div>
-                  <div class="text-xs uppercase tracking-wider text-gray-500">{{ stat.label }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <MangaContinueReading v-if="continueReading.length" :items="continueReading" />
-        <MangaCarousel v-if="recommended.length" title="⭐ Recomendados para ti" :items="recommended" />
-        <MangaCarousel title="🔥 Tendencias" :items="trending" />
-        <MangaList title="🆕 Últimos capítulos" :items="latestChapters" />
-
-      </div>
-
     </template>
   </div>
 </template>
@@ -292,12 +280,11 @@
 <script setup lang="ts">
 import { rankColors, rankGlow } from '@/helpers/utils'
 import { formatReaders } from '@/helpers'
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/Auth'
 import MangaCarousel from '@/components/MangaCarousel.vue'
 import MangaList from '@/components/MangaList.vue'
-import MangaContinueReading from '@/components/MangaContinueReading.vue'
 import { getHomePage } from '@/repositories/HomeService'
 import type {
   Manga,
@@ -305,10 +292,9 @@ import type {
   ChapterVersion,
   ContinueReading,
 } from '@/types/Manga'
+import alertService from '@/helpers/sweetalert'
 
 const store = useAuthStore();
-
-// ─── State ────────────────────────────────────────────────────────
 const loading = ref(true)
 const error = ref<string | null>(null)
 const trending = ref<Manga[]>([])
@@ -317,14 +303,7 @@ const latestChapters = ref<ChapterVersion[]>([])
 const continueReading = ref<ContinueReading[]>([])
 const recommended = ref<Manga[]>([])
 
-// ─── Computed ─────────────────────────────────────────────────────
-const userStats = computed(() => [
-  { label: 'Caps. leídos', value: store.user?.chaptersRead ?? 0 },
-  { label: 'Favoritos', value: store.user?.favorites ?? 0 },
-  { label: 'Siguiendo', value: store.user?.following ?? 0 },
-])
-
-// ─── Static data ──────────────────────────────────────────────────
+// Static data
 const stats = [
   { value: '10K+', label: 'Títulos' },
   { value: '500K+', label: 'Capítulos' },
@@ -355,9 +334,23 @@ const loadHomePage = async (): Promise<void> => {
       continueReading.value = response?.continueReading || []
       recommended.value = response?.recommended || []
     }
-  } catch (e) {
+  } catch (e: any) {
     error.value = 'No se pudo cargar el contenido. Intenta de nuevo.'
     console.error('[Home] loadHomePage error:', e)
+    
+    // Mostrar alerta de error con SweetAlert2
+    await alertService.error(
+      'Error de carga',
+      'No se pudo cargar el contenido de la página principal. Por favor, intenta recargar la página.',
+      {
+        confirmButtonText: 'Recargar página',
+        cancelButtonText: 'Cancelar',
+      }
+    ).then((result) => {
+      if (result.isConfirmed) {
+        window.location.reload()
+      }
+    })
   } finally {
     loading.value = false
   }

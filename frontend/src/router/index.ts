@@ -37,6 +37,12 @@ const routes = [
     name: 'chapter.create',
     component: () => import('@/views/Chapter/ChapterCreate.vue'),
   },
+  {
+    path: '/dashboard',
+    name: 'dashboard',
+    component: () => import('@/views/Dashboard.vue'),
+    meta: { requiresAuth: true }
+  },
 ]
 
 const router = createRouter({

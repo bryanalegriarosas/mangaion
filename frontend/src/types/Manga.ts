@@ -7,6 +7,16 @@ export interface Genre {
   slug: string
 }
 
+export interface MangaFilters {
+  search?:  string
+  genre?:   string
+  tag?:     string
+  status?:  string
+  type?:    string
+  sort?:    'latest' | 'popular' | 'favorites'
+  page?:    number
+}
+
 // ── MangaResource ────────────────────────────────────────────────
 export interface Manga {
   id:     number

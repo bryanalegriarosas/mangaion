@@ -26,6 +26,7 @@ export const useAuthStore = defineStore('auth', {
             this.user = data;
         },
         clearToken(): void {
+            this.user = null;
             this.token = null;
         },
     },

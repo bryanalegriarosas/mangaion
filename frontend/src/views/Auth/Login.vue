@@ -142,7 +142,7 @@
 
             <!-- Forgot password -->
             <div class="flex items-center justify-between">
-              <a href="#" class="text-sm text-red-500 dark:text-red-400 hover:underline">
+              <a @click="handleForgotPassword" class="text-sm text-red-500 dark:text-red-400 hover:underline cursor-pointer">
                 ¿Olvidaste tu contraseña?
               </a>
             </div>
@@ -182,6 +182,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/Auth';
 import { login } from '@/repositories/Auth';
 import type { LoginParams } from '@/types/Auth';
+import alertService from '@/helpers/sweetalert';
 
 // ─── Router & Store ───────────────────────────────────────────────────────
 const router = useRouter();
@@ -230,6 +231,47 @@ const validateForm = (): boolean => {
   return isValid
 }
 
+const handleForgotPassword = async (): Promise<void> => {
+  const { value: email } = await alertService.custom({
+    title: 'Recuperar contraseña',
+    text: 'Ingresa tu email para recibir instrucciones de recuperación',
+    input: 'email',
+    inputPlaceholder: 'email@example.com',
+    inputValidator: (value) => {
+      if (!value) {
+        return 'El email es obligatorio'
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(value)) {
+        return 'El email no es válido'
+      }
+      return null
+    },
+    showCancelButton: true,
+    confirmButtonText: 'Enviar',
+    cancelButtonText: 'Cancelar',
+  })
+
+  if (email) {
+    try {
+      // Mostrar alerta de carga
+      alertService.loading('Enviando...', 'Procesando tu solicitud')
+      
+      // Aquí iría la lógica para enviar el email de recuperación
+      // await passwordResetRequest(email)
+      
+      // Simulación de envío (reemplazar con la llamada real)
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      alertService.close()
+      await alertService.success('Email enviado', 'Hemos enviado instrucciones a tu email')
+    } catch (error: any) {
+      alertService.close()
+      await alertService.error('Error', 'No se pudo enviar el email de recuperación')
+    }
+  }
+}
+
 const handleLogin = async (): Promise<void> => {
   if (!validateForm()) return
 
@@ -243,10 +285,13 @@ const handleLogin = async (): Promise<void> => {
     store.setToken(response.token)
     store.setUser(response.user)
     
-    // Redirect to home after successful login
-    router.push({ name: 'home' })
+    // Redirect to dashboard after successful login
+    router.push({ name: 'dashboard' })
+    
+    // Mostrar alerta de éxito
+    alertService.toast.success(`¡Bienvenido! ${response.user.name} ${response.user.last_name}`);
   } catch (err: any) {
-    console.error('[Login] Error:', err)
+    console.error('[Login] Error:', err);
     
     // Handle different types of errors
     if (err.response?.data?.errors) {
@@ -257,17 +302,23 @@ const handleLogin = async (): Promise<void> => {
           errors[key as keyof typeof errors] = serverErrors[key][0]
         }
       })
+      // Mostrar alerta de error de validación
+      await alertService.error('Error de validación', 'Por favor, revisa los campos marcados')
     } else if (err.response?.data?.message) {
       // General error message
       error.value = err.response.data.message
+      await alertService.error('Error', err.response.data.message)
     } else if (err.response?.status === 401) {
       // Invalid credentials
       error.value = 'Email o contraseña incorrectos'
+      await alertService.error('Credenciales incorrectas', 'El email o contraseña que ingresaste no son correctos')
     } else if (err.message) {
       // Network or other error
       error.value = 'No se pudo iniciar sesión. Intenta de nuevo.'
+      await alertService.error('Error de conexión', 'No se pudo conectar con el servidor. Intenta de nuevo más tarde.')
     } else {
       error.value = 'Ocurrió un error inesperado'
+      await alertService.error('Error inesperado', 'Ocurrió un error inesperado. Por favor, intenta de nuevo.')
     }
   } finally {
     loading.value = false
