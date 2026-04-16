@@ -18,7 +18,6 @@ use Illuminate\Support\Str;
 
 class MangaController extends Controller
 {
-
     public function __construct(private Helpers $helper) {}
 
     // ─────────────────────────────────────────────────────────────
@@ -34,7 +33,7 @@ class MangaController extends Controller
             ])
             ->withCount(['favorites', 'views', 'comments']);
 
-        // 🔍 Búsqueda — usa normalized_title para consistencia con el esquema
+        // 🔍 Búsqueda por título normalizado o títulos alternativos
         if ($request->filled('search')) {
             $search = Str::of($request->search)->lower()->trim()->__toString();
 
@@ -81,7 +80,7 @@ class MangaController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────
-    // 🔍 VER — por ID
+    // 🔍 VER — por ID con route model binding
     // ─────────────────────────────────────────────────────────────
     public function show(Manga $manga): MangaResource
     {
@@ -89,7 +88,7 @@ class MangaController extends Controller
             'titles',
             'genres:id,name,slug',
             'tags:id,name,slug,category',
-            'chapters' => fn($q) => $q->orderBy('chapter_number'),
+            'chapters'                     => fn($q) => $q->orderBy('chapter_number'),
             'chapters.versions.language:id,name,code',
             'chapters.versions.scanGroup:id,name',
             'ratings:id,manga_id,rating',
@@ -99,31 +98,46 @@ class MangaController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────
+    // 📚 MIS MANGAS — mangas del usuario autenticado
+    // ─────────────────────────────────────────────────────────────
+    public function myMangas(Request $request): AnonymousResourceCollection
+    {
+        $mangas = Manga::where('created_by', $request->user('sanctum')->id)
+            ->with([
+                'genres:id,name,slug',
+                'ratings:id,manga_id,rating',
+            ])
+            ->withCount(['views', 'favorites', 'chapters'])
+            ->latest()
+            ->get();
+
+        return MangaResource::collection($mangas);
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // 📥 CREAR
     // ─────────────────────────────────────────────────────────────
     public function store(StoreRequest $request): JsonResponse
     {
-        return DB::transaction(function () use ($request) {
-            $user       = $request->user();
-            $normalized = Str::of($request->title)->lower()->trim()->__toString();
+        $user       = $request->user();
+        $normalized = Str::of($request->title)->lower()->trim()->__toString();
 
-            // ❗ Evitar duplicados por título normalizado
-            $exists = Manga::where('normalized_title', $normalized)
-                ->orWhereHas('titles', fn($q) =>
-                    $q->where('normalized_title', $normalized)
-                )
-                ->exists();
+        // ❗ Evitar duplicados por título normalizado
+        $exists = Manga::where('normalized_title', $normalized)
+            ->orWhereHas('titles', fn($q) =>
+                $q->where('normalized_title', $normalized)
+            )
+            ->exists();
 
-            if ($exists) {
-                return response()->json([
-                    'message' => 'A manga with this title already exists.',
-                ], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
-            }
+        if ($exists) {
+            return response()->json([
+                'message' => 'A manga with this title already exists.',
+            ], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
 
-            // 🔑 Slug único
+        $manga = DB::transaction(function () use ($request, $user, $normalized) {
             $slug = $this->helper->generateUniqueSlug(Str::slug($request->title));
 
-            // 📚 Crear manga
             $manga = Manga::create([
                 'title'            => $request->title,
                 'normalized_title' => $normalized,
@@ -152,15 +166,18 @@ class MangaController extends Controller
                 $manga->tags()->sync($request->tags);
             }
 
-            // 🖼️ Cover
+            // 🖼️ Cover — requerido en StoreRequest, siempre existe
             $manga->update([
                 'cover_image' => $this->storeCover($request, $manga->id),
             ]);
 
-            return (new MangaResource(
-                $manga->load(['genres', 'tags', 'titles'])
-            ))->response()->setStatusCode(JsonResponse::HTTP_CREATED);
+            return $manga;
         });
+
+        // Retornar fuera de la transacción para no mezclar Response con DB
+        return (new MangaResource(
+            $manga->load(['genres', 'tags', 'titles'])
+        ))->response()->setStatusCode(JsonResponse::HTTP_CREATED);
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -168,9 +185,9 @@ class MangaController extends Controller
     // ─────────────────────────────────────────────────────────────
     public function update(UpdateRequest $request, Manga $manga): JsonResponse
     {
-        return DB::transaction(function () use ($request, $manga) {
+        // La autorización está en UpdateRequest::authorize()
+        $manga = DB::transaction(function () use ($request, $manga) {
 
-            // 🔄 Si cambia el título
             if ($request->filled('title')) {
                 $normalized = Str::of($request->title)->lower()->trim()->__toString();
 
@@ -179,9 +196,8 @@ class MangaController extends Controller
                     ->exists();
 
                 if ($duplicate) {
-                    return response()->json([
-                        'message' => 'A manga with this title already exists.',
-                    ], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+                    // Lanzar excepción para que la transacción haga rollback
+                    throw new \Exception('duplicate_title');
                 }
 
                 $manga->titles()->updateOrCreate(
@@ -195,7 +211,6 @@ class MangaController extends Controller
                 ]);
             }
 
-            // 🔄 Campos opcionales
             $manga->fill($request->only([
                 'description',
                 'author',
@@ -207,8 +222,7 @@ class MangaController extends Controller
 
             $manga->save();
 
-            // 🎭 Géneros y tags
-            // Usamos has() en lugar de filled() para permitir arrays vacíos (desasignar todos)
+            // Usamos has() para permitir arrays vacíos (desasignar todos)
             if ($request->has('genres')) {
                 $manga->genres()->sync($request->genres ?? []);
             }
@@ -216,7 +230,6 @@ class MangaController extends Controller
                 $manga->tags()->sync($request->tags ?? []);
             }
 
-            // 🖼️ Cover
             if ($request->hasFile('cover_image')) {
                 if ($manga->cover_image) {
                     Storage::disk('public')->delete($manga->cover_image);
@@ -226,10 +239,12 @@ class MangaController extends Controller
                 ]);
             }
 
-            return (new MangaResource(
-                $manga->load(['genres', 'tags', 'titles'])
-            ))->response();
+            return $manga;
         });
+
+        return (new MangaResource(
+            $manga->load(['genres', 'tags', 'titles'])
+        ))->response();
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -245,12 +260,12 @@ class MangaController extends Controller
             !$user->hasRole(Role::ADMIN)
         ) {
             return response()->json(
-                ['message' => 'Unauthorized'],
+                ['message' => 'Unauthorized.'],
                 JsonResponse::HTTP_FORBIDDEN
             );
         }
 
-        // 🗑️ Borra todo el directorio del manga en storage (cover + imágenes futuras)
+        // Borra todo el directorio del manga en storage (cover + páginas futuras)
         Storage::disk('public')->deleteDirectory("mangas/{$manga->id}");
 
         $manga->delete();
@@ -260,6 +275,10 @@ class MangaController extends Controller
             JsonResponse::HTTP_OK
         );
     }
+
+    // ─────────────────────────────────────────────────────────────
+    // 🔧 HELPERS PRIVADOS
+    // ─────────────────────────────────────────────────────────────
 
     private function storeCover(Request $request, int $mangaId): string
     {

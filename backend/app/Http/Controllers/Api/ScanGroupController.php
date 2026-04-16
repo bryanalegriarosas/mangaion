@@ -25,7 +25,7 @@ class ScanGroupController extends Controller
     /**
      * 🔍 Ver grupo con miembros
      */
-    public function show($id): JsonResponse
+    public function show(int $id): JsonResponse
     {
         $group = ScanGroup::with('users')->find($id);
 
@@ -102,7 +102,7 @@ class ScanGroupController extends Controller
     /**
      * 🔄 Actualizar rol
      */
-    public function updateUserRole(Request $request, $groupId, $userId): JsonResponse
+    public function updateUserRole(Request $request, int $groupId, int $userId): JsonResponse
     {
         $request->validate([
             'role' => 'required|string'
@@ -135,7 +135,7 @@ class ScanGroupController extends Controller
     /**
      * ❌ Quitar usuario del grupo
      */
-    public function removeUser(Request $request, $groupId, $userId): JsonResponse
+    public function removeUser(Request $request, int $groupId, int $userId): JsonResponse
     {
         $group = ScanGroup::find($groupId);
 
@@ -162,7 +162,7 @@ class ScanGroupController extends Controller
     /**
      * ❌ Eliminar grupo
      */
-    public function destroy(Request $request, $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
         $group = ScanGroup::find($id);
 
