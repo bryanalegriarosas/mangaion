@@ -17,15 +17,16 @@ const routes = [
     component: () => import('@/views/Auth/Login.vue'),
   },
   {
-    path: '/mangas',
-    name: 'manga.list',
-    component: () => import('@/views/Manga/MangaList.vue'),
+    path: '/dashboard',
+    name: 'dashboard',
+    component: () => import('@/views/Dashboard.vue'),
+    meta: { requiresAuth: true }
   },
   {
-    path: '/manga/:slug',
-    name: 'manga.show',
-    component: () => import('@/views/Manga/MangaDetail.vue'),
-    props: true,
+    path: '/mangas/create',
+    name: 'manga.create',
+    component: () => import('@/views/Manga/CreateManga.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/chapter/:id',
@@ -37,17 +38,11 @@ const routes = [
     name: 'chapter.create',
     component: () => import('@/views/Chapter/ChapterCreate.vue'),
   },
-  {
-    path: '/dashboard',
-    name: 'dashboard',
-    component: () => import('@/views/Dashboard.vue'),
-    meta: { requiresAuth: true }
-  },
-]
+];
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
-})
+});
 
-export default router
+export default router;

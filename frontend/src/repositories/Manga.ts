@@ -1,5 +1,5 @@
 import Api from '@/services/Api'
-import type { Manga, PaginatedResponse, MangaFilters } from '@/types/Manga'
+import type { Manga, PaginatedResponse, MangaFilters, ParamsManga } from '@/types/Manga'
 
 /**
  * Listado de mangas con filtros y paginación
@@ -34,10 +34,13 @@ export async function getMyMangas(): Promise<Manga[]> {
  * Crear un nuevo manga (multipart/form-data por el cover)
  * POST /mangas
  */
-export async function createManga(payload: FormData): Promise<Manga> {
-  const { data } = await Api.post('/mangas', payload, {
+export async function createManga(params: ParamsManga): Promise<Manga> {
+  /*const { data } = await Api.post('/mangas', payload, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
+  return data.data;
+  */
+  const { data } = await Api.postForm('/mangas', params);
   return data.data;
 };
 

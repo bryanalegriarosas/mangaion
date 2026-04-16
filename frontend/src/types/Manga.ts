@@ -1,10 +1,35 @@
 import type { User } from "./Auth"
 
-// ── GenreResource ────────────────────────────────────────────────
 export interface Genre {
   id:   number
   name: string
   slug: string
+}
+
+export interface Tag {
+  id: number
+  name: string
+  slug: string
+}
+
+export interface TagResponse {
+  data: (Tag & { category: string })[]
+  grouped: Record<string, Tag[]>
+}
+
+export type GroupedTag = Record<string, Tag[]>
+
+export interface ParamsManga {
+  title: string
+  status: string
+  type: string
+  cover_image: File | null
+  description?: string
+  author?: string
+  artist?: string
+  release_year?: number
+  genres: number[]
+  tags: number[]
 }
 
 export interface MangaFilters {
@@ -28,6 +53,8 @@ export interface Manga {
   genre:  string | null   // primer género (shortcut)
   genres: Genre[]
   rating: number | null
+  description: string | null
+  chapters?: ChapterVersion[]
 }
 
 // ── PopularMangaResource (extiende MangaResource) ────────────────
